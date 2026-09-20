@@ -37,6 +37,10 @@ interface BenchmarkResult {
   p95Ms: number;
   p99Ms: number;
   processingSamplesMs: number[];
+  mainThreadP50Ms: number;
+  mainThreadP95Ms: number;
+  mainThreadP99Ms: number;
+  mainThreadSamplesMs: number[];
   presented: number;
   missedSourceFrames: number;
   skippedFrames: number;
@@ -146,6 +150,7 @@ async function benchmark(
   const metrics = new RollingFrameMetrics();
   const source = new SyntheticVideoFrameSource(fps, sourceCanvas.width, sourceCanvas.height);
   const processingSamplesMs: number[] = [];
+  const mainThreadSamplesMs: number[] = [];
   const passCount = quality === "low" ? 1 : 2;
 
   try {
@@ -162,6 +167,7 @@ async function benchmark(
       metrics,
       frameCount,
       processingSamplesMs,
+      mainThreadSamplesMs,
       (presented) => {
         if (presented % 10 === 0) setText("status", `${presented}/${frameCount}`);
       },
@@ -194,6 +200,10 @@ async function benchmark(
     p95Ms: summarizeTimingSamples(processingSamplesMs).p95,
     p99Ms: summarizeTimingSamples(processingSamplesMs).p99,
     processingSamplesMs,
+    mainThreadP50Ms: summarizeTimingSamples(mainThreadSamplesMs).p50,
+    mainThreadP95Ms: summarizeTimingSamples(mainThreadSamplesMs).p95,
+    mainThreadP99Ms: summarizeTimingSamples(mainThreadSamplesMs).p99,
+    mainThreadSamplesMs,
     presented: snapshot.presentedFrames,
     missedSourceFrames: snapshot.missedFrames,
     skippedFrames: snapshot.droppedFrames,
@@ -213,6 +223,7 @@ async function runScheduledFrames(
   metrics: RollingFrameMetrics,
   frameCount: number,
   processingSamplesMs: number[],
+  mainThreadSamplesMs: number[],
   onPresented: (count: number) => void,
 ): Promise<void> {
   let resolveRun!: () => void;
@@ -232,7 +243,9 @@ async function runScheduledFrames(
       prepare: async () => {
         const startedAt = performance.now();
         try {
-          return await prepareCanvasFrame(backend);
+          const prepared = await prepareCanvasFrame(backend);
+          mainThreadSamplesMs.push(prepared.stats.cpuSubmitMs);
+          return prepared;
         } finally {
           processingSamplesMs.push(performance.now() - startedAt);
         }

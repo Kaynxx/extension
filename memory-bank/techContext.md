@@ -129,7 +129,7 @@ Bu seçimler P0 iskelesi kurulurken doğrulanacak, henüz bağımlılık kurulma
 
 - Kullanıcı politikası gereği `p1-browser.mjs`, benchmark/visual/adaptive runner'ları ve Playwright extension integration `headless:true` kullanır; headed/visible/CUA açılışları reddedilir.
 - `assertCanonicalAcceptanceEvidence()` artık headless Chromium user-agent'ını kabul eder; fiziksel WebGPU/Vulkan ve ham timing kapıları korunur.
-- Headless fiziksel RTX 5070 kanıtı canonical rapor için geçerlidir: 1920×1080→3840×2160 direct 2×, 24/30 FPS, 4×120 kare, güncel p95 en çok 10.30 ms (24/high).
+- Headless fiziksel RTX 5070 kanıtı canonical rapor için geçerlidir: 1920×1080→3840×2160 direct 2×, 24/30 FPS, 4×120 kare, güncel p95 en çok 10.00 ms (24/low).
 - Visual evidence runner `halo`, `double-line`, `color-bleed`, `temporal-shimmer` fixture'larını low/high/safe-fallback modlarında kaydeder; `canvas.toDataURL()` yalnız kanıt kompozisyonunda kullanılır.
 - `scripts/acceptance-validation.mjs` ve unit manifest kapısı da headless-only olarak hizalandı; headed user-agent artık kabul yüzeyi değildir.
 - Son `npm run check`: 15 test dosyası / 76 test; headless extension integration 3/3.

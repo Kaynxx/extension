@@ -99,15 +99,29 @@ try {
         if (
           state.result.sourceMode !== "synthetic-canvas-imagebitmap" ||
           !Array.isArray(state.result.processingSamplesMs) ||
-          state.result.processingSamplesMs.length < frames
+          state.result.processingSamplesMs.length < frames ||
+          !Array.isArray(state.result.mainThreadSamplesMs) ||
+          state.result.mainThreadSamplesMs.length < frames
         ) {
-          throw new Error(`${fps} FPS ${quality} benchmark raw zaman örnekleri eksik.`);
+          throw new Error(`${fps} FPS ${quality} benchmark raw timing örnekleri eksik.`);
         }
         const recomputed = summarizeRawTiming(state.result.processingSamplesMs);
         for (const key of ["p50Ms", "p95Ms", "p99Ms"]) {
           if (Math.abs(recomputed[key] - state.result[key]) > 0.000001) {
             throw new Error(
               `${fps} FPS ${quality} benchmark ${key} raw örneklerden yeniden üretilemedi.`,
+            );
+          }
+        }
+        const recomputedMainThread = summarizeRawTiming(state.result.mainThreadSamplesMs);
+        for (const [sampleKey, resultKey] of [
+          ["p50Ms", "mainThreadP50Ms"],
+          ["p95Ms", "mainThreadP95Ms"],
+          ["p99Ms", "mainThreadP99Ms"],
+        ]) {
+          if (Math.abs(recomputedMainThread[sampleKey] - state.result[resultKey]) > 0.000001) {
+            throw new Error(
+              `${fps} FPS ${quality} main-thread ${resultKey} raw örneklerden yeniden üretilemedi.`,
             );
           }
         }

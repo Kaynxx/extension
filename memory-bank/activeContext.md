@@ -47,7 +47,7 @@ Son güncelleme: 2026-09-20
 
 ## Son doğrulama
 
-- Headless RTX 5070 benchmarkı: 1920×1080→3840×2160 direct 2×, 24/30 FPS low/high, 4×120 kare; güncel p95 en çok 10.30 ms (24/high), main-thread submit p50/p95/p99 alanları da canonical JSON'a eklendi; missed/skipped/stale/failed/bypass/GPU hata 0.
+- Headless RTX 5070 benchmarkı: 1920×1080→3840×2160 direct 2×, 24/30 FPS low/high, 4×120 kare; güncel p95 en çok 10.00 ms (24/low), main-thread submit p50/p95/p99 alanları da canonical JSON'a eklendi; missed/skipped/stale/failed/bypass/GPU hata 0.
 - Headless adaptive stress: high→low, 120 settled-low örneği, 5 saniye hysteresis sonrası low→high; maxConcurrentPrepares=1, failed=0, bypass=0.
 - Görsel harness: 4 risk fixture × 3 mod; mekanik pass map, playback değişmezliği, temporal çift ve non-black çıktı kapıları mevcut.
 - `tests/integration/extension.spec.ts` başlatması headless persistent Chromium kullanır; native YouTube/DRM/CORS ve insan subjektif kalite kararı bu masaüstü politikasında açık risk olarak kalır.

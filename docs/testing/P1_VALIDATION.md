@@ -26,10 +26,10 @@ Güncel headless koşu kaynak `1920×1080`, çıktı `3840×2160`, doğrudan x2;
 GeForce RTX 5070, Chrome/Chromium 151, WebGPU + Vulkan etkin. Dört koşunun her biri 120 kare sundu; missed,
 skipped, stale, failed, bypass ve GPU hata sayaçları sıfırdır. Güncel p50/p95/p99 değerleri:
 
-| FPS |      low (p50/p95/p99) |      high (p50/p95/p99) |
-| --: | ---------------------: | ----------------------: |
-|  24 |  7.00 / 9.20 / 9.90 ms | 7.40 / 10.30 / 10.60 ms |
-|  30 | 7.30 / 8.10 / 10.40 ms |  7.30 / 8.90 / 13.50 ms |
+| FPS |       low (p50/p95/p99) |     high (p50/p95/p99) |
+| --: | ----------------------: | ---------------------: |
+|  24 | 7.30 / 10.00 / 10.20 ms | 7.10 / 9.90 / 10.10 ms |
+|  30 |  7.10 / 8.40 / 10.00 ms |  7.20 / 7.60 / 7.90 ms |
 
 Ham örnekler ve p50/p95/p99 alanları canonical JSON'da saklanır; bu sonuç sentetik SDR
 canvas/ImageBitmap harness ölçümüdür, native YouTube/DRM/CORS ölçümü değildir. Aynı JSON'da

@@ -42,7 +42,7 @@ Son güncelleme: 2026-09-20
 | Latest-frame-wins/metrikler | Production + unit kanıtlı           | `FrameScheduler`, `RollingFrameMetrics`, adaptive JSON |
 | Adaptif kalite              | Headless stress ile doğrulandı      | high→low, 120 low örneği, 5 s recovery                 |
 | Anime4K backend             | İki gerçek pass seviyesi            | low=1 pass, high=2 pass; direct x2/x3                  |
-| P1 performans               | Headless fiziksel GPU'da tamamlandı | Güncel 4×120, 24/30 FPS p95 8.10–10.30 ms              |
+| P1 performans               | Headless fiziksel GPU'da tamamlandı | Güncel 4×120, 24/30 FPS p95 7.60–10.00 ms              |
 | P1 görsel mekanik kayıt     | Tamamlandı; insan incelemesi açık   | 12 capture ve visual manifest                          |
 
 ## P1 kabul matrisi
