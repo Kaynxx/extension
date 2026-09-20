@@ -96,6 +96,8 @@ export class WebGpuBackend implements UpscalerBackend {
   private activeFrameToken: number | undefined;
   private deviceLostListenerGeneration = 0;
   private historyValid = false;
+  private temporalEnabled = false;
+  private strengthMultiplier = 1.0;
 
   async initialize(context: BackendContext): Promise<void> {
     if (this.initialized)
@@ -211,6 +213,12 @@ export class WebGpuBackend implements UpscalerBackend {
     this.requireUsable();
     this.qualityLevel = level;
     this.resetTemporal("quality-change");
+    this.writeParameters();
+  }
+
+  setStrength(strength: number): void {
+    this.requireUsable();
+    this.strengthMultiplier = Math.max(0, Math.min(100, strength)) / 50;
     this.writeParameters();
   }
 
@@ -352,7 +360,7 @@ export class WebGpuBackend implements UpscalerBackend {
           [this.outputSize.width, this.outputSize.height, 1],
         );
         this.requireDevice().queue.submit([encoder.finish()]);
-        this.historyValid = true;
+        this.historyValid = this.temporalEnabled;
         this.writeTemporalParameters();
       },
       discard: consume,
@@ -369,7 +377,7 @@ export class WebGpuBackend implements UpscalerBackend {
     floats[1] = this.inputSize.height;
     floats[2] = this.outputSize.width;
     floats[3] = this.outputSize.height;
-    floats[4] = params.strength;
+    floats[4] = params.strength * this.strengthMultiplier;
     floats[5] = params.denoise;
     uints[6] = PROFILE_IDS[this.profile];
     uints[7] = QUALITY_IDS[this.qualityLevel];

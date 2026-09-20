@@ -81,7 +81,7 @@ export class Anime4kBackend implements UpscalerBackend {
   private temporalBuffer: GPUBuffer | undefined;
   private historyTexture: GPUTexture | undefined;
   private historyValid = false;
-  private temporalEnabled = true;
+  private temporalEnabled = false;
   private inputSize: FrameSize = { width: 0, height: 0 };
   private outputSize: FrameSize = { width: 0, height: 0 };
   private qualityLevel: QualityLevel = "low";

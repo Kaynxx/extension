@@ -38,3 +38,6 @@ docs/testing/evidence/
 # Downloaded model cache
 models/cache/
 *.onnx.data
+
+# Local training data, checkpoints, environments, logs and process markers.
+training/
