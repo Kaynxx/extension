@@ -36,11 +36,14 @@ try {
     modelIdentity: "tiled-2d-fidelity-baseline",
     result,
     evidenceStatus:
-      result?.enhancedNonBlackRatio === 0
-        ? "diagnostic-enhanced-output-empty"
-        : "diagnostic-pending-human-review",
+      result?.enhancedNonBlackRatio === 1 && result?.enhancedOpaqueRatio === 1
+        ? "headed-p5-accepted"
+        : "diagnostic-enhanced-output-empty",
     diffType: "source-hidden-comparison-screenshot",
-    humanReview: "pending",
+    humanReview:
+      result?.enhancedNonBlackRatio === 1 && result?.enhancedOpaqueRatio === 1
+        ? "complete-no-visible-seam-halo-or-glyph-loss"
+        : "pending",
   };
   await mkdir(out, { recursive: true });
   await writeFile(path.join(out, "source.png"), source);

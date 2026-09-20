@@ -24,7 +24,9 @@ export function enhanceMangaToCanvas(
   const outputHeight = Math.max(1, Math.round(sourceHeight * scale));
   canvas.width = outputWidth;
   canvas.height = outputHeight;
-  const context = canvas.getContext("2d");
+  // Static manga output is read back for seam/content guards. A CPU-backed
+  // context makes that readback deterministic across headed Chromium GPUs.
+  const context = canvas.getContext("2d", { alpha: true, willReadFrequently: true });
   if (!context) throw new Error("Manga canvas 2D context is unavailable");
   context.imageSmoothingEnabled = true;
   context.imageSmoothingQuality = "high";

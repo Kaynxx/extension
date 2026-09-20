@@ -96,15 +96,18 @@ Son güncelleme: 2026-09-20
 
 ## 2026-09-20 P5 manga static MVP
 
-### Headed acceptance diagnostic
+### Headed acceptance
 
 - Normal headed Chromium + physical RTX 5070/Vulkan/WebGPU gate passed; deterministic
   5000×3000 manga fixture rendered with 24 tiles and 64px overlap.
 - Lazy/offscreen defer, animated/canvas/video exclusion, duplicate suppression,
   source immutability and restore all passed.
-- Source capture is valid, but the enhanced canvas readback is fully transparent
-  (`enhancedNonBlackRatio=0`); no canonical P5 promotion. Evidence remains diagnostic
-  pending a separate canvas source/draw investigation.
+- Root cause of the transparent readback was the default GPU-backed 2D context in
+  this headed Chromium path; the static output now uses a deterministic
+  `willReadFrequently` context. Re-run produced opaque/nonblack output at 4096×2458.
+- Source/enhanced/diff captures were inspected: no visible tile seam, halo, double
+  line or color bleed; fine glyphs and speech bubbles remain legible. P5 evidence
+  is accepted for this deterministic baseline.
 
 - `mangaEnabled` ayarı ve popup opt-in anahtarı eklendi; varsayılan kapalı.
 - Video hattından bağımsız `MangaImagePipeline`, lazy IntersectionObserver,

@@ -52,12 +52,11 @@ window.__P5_RUN__ = async () => {
   await pipeline.process(source);
   const overlay = document.querySelector<HTMLCanvasElement>("[data-webgpu-upscaler-manga-overlay]");
   if (!overlay) throw new Error("manga overlay missing");
-  const bitmap = await createImageBitmap(source);
-  enhanceMangaToCanvas(bitmap, enhanced, source.naturalWidth, source.naturalHeight, {
+  enhanceMangaToCanvas(source, enhanced, source.naturalWidth, source.naturalHeight, {
     tileSize: 1024,
     overlap: 64,
+    maxOutputDimension: 4096,
   });
-  bitmap.close();
   await new Promise<void>((resolve) =>
     requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
   );
@@ -75,6 +74,16 @@ window.__P5_RUN__ = async () => {
   let nonBlack = 0;
   for (let i = 0; i < pixels.length; i += 4)
     if ((pixels[i] ?? 0) + (pixels[i + 1] ?? 0) + (pixels[i + 2] ?? 0) > 30) nonBlack++;
+  const opaqueRatio =
+    pixels.reduce(
+      (count, _, index) => (index % 4 === 3 && pixels[index]! > 0 ? count + 1 : count),
+      0,
+    ) /
+    (pixels.length / 4);
+  if (nonBlack === 0 || opaqueRatio < 0.99)
+    throw new Error(
+      `enhanced canvas content guard failed: nonBlack=${nonBlack} opaque=${opaqueRatio}`,
+    );
   const beforeRestore = source.currentSrc;
   pipeline.restore(source);
   const restored =
@@ -94,5 +103,6 @@ window.__P5_RUN__ = async () => {
     sourceUntouched,
     restored,
     enhancedNonBlackRatio: nonBlack / (enhanced.width * enhanced.height),
+    enhancedOpaqueRatio: opaqueRatio,
   };
 };

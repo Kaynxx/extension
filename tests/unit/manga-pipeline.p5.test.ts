@@ -90,6 +90,10 @@ describe("P5 manga static pipeline", () => {
     await pipeline.process(image);
     await pipeline.process(image);
     expect(pipeline.hasProcessed(image)).toBe(true);
+    expect(HTMLCanvasElement.prototype.getContext).toHaveBeenCalledWith("2d", {
+      alpha: true,
+      willReadFrequently: true,
+    });
     expect(document.querySelectorAll("canvas")).toHaveLength(1);
     pipeline.restore(image);
     expect(pipeline.hasProcessed(image)).toBe(false);
