@@ -11,12 +11,10 @@ import { launchP1Browser } from "./p1-browser.mjs";
 const root = process.cwd();
 const port = Number(process.env.P1_ADAPTIVE_PORT ?? 4176);
 const chromeExecutable = process.env.P1_CHROME_BIN ?? "chromium";
-if (process.env.P1_ADAPTIVE_HEADLESS === "false") {
-  throw new Error(
-    "Bu çalışma alanında kullanıcı talimatı gereği headed/desktop testleri kapalıdır.",
-  );
+if (process.env.P1_ADAPTIVE_HEADLESS === "true") {
+  throw new Error("Canonical P1 evidence cannot be produced from a headless surface.");
 }
-const headless = true;
+const headless = false;
 const harnessUrl = `http://127.0.0.1:${port}/tests/harness/p1-adaptive.html`;
 const outputDirectory = path.join(root, "docs/testing/evidence/p1");
 
@@ -54,7 +52,7 @@ try {
     (transition) => transition.from === "low" && transition.to === "high",
   );
   const checks = {
-    headless: true,
+    headless,
     hardware: gpuSystemInfo.hardwareStatus === "hardware",
     highToLow: Boolean(downgrade),
     overloadExceededBudget: result.overloadPhase.p95Ms > result.frameBudgetMs,

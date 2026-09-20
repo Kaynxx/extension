@@ -2,17 +2,18 @@ import { chromium } from "@playwright/test";
 
 /**
  * Launch configuration shared by the physical-GPU P1 browser surfaces.
- * Headless Chromium is enforced so runners cannot open a desktop window.
+ * Canonical acceptance uses headed Chromium. Headless surfaces are diagnostic
+ * only and must never write canonical evidence.
  */
-export async function launchP1Browser({ chromeExecutable, headless = true }) {
-  if (headless !== true) {
+export async function launchP1Browser({ chromeExecutable, headless = false }) {
+  if (headless !== false) {
     throw new Error(
-      "Bu çalışma alanında kullanıcı talimatı gereği headed/desktop testleri kapalıdır.",
+      "Canonical P1 kanıtı için headed Chromium zorunludur; headless yüzey geçersizdir.",
     );
   }
   return chromium.launch({
     executablePath: chromeExecutable,
-    headless: true,
+    headless: false,
     args: [
       "--enable-unsafe-webgpu",
       "--enable-features=Vulkan",

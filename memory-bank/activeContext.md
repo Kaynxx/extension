@@ -1,5 +1,15 @@
 # Active Context
 
+## 2026-09-20 canonical evidence correction
+
+- Root P1 benchmark/adaptive/visual artifacts had `headless: true` and/or
+  `HeadlessChrome`; physical GPU status does not make them acceptance evidence.
+- Raw files were preserved under explicit diagnostic-headless archives and
+  removed from canonical paths. Canonical guards now require headed Chromium
+  (`headless:false`) and reject HeadlessChrome user-agents.
+- No headed/browser/GPU run was started in this session; P1 canonical evidence is
+  pending and old headless records are diagnostic only.
+
 Son güncelleme: 2026-09-20
 
 ## 2026-09-20 statik kapanış durumu
@@ -10,15 +20,12 @@ Son güncelleme: 2026-09-20
 - `npm run package:release` deterministik `artifacts/webgpu-video-upscaler-0.1.0.zip` ve SHA256 üretiyor; arşiv yalnız dist ve lisans/gizlilik dosyalarını içeriyor, source map/evidence/local path içermiyor.
 - Native YouTube DRM/CORS ve insan görsel değerlendirmesi; yalnız mekanik görsel arşiv (subjektif kabul değil); P2/P3 gerçek model/OCR/60 FPS; P4 temporal model açık kabul kapılarıdır. Başlıklı/görünür test çalıştırılmadı.
 
-## 2026-09-20 headless görsel manifest promotion
+## 2026-09-20 headless görsel kayıtlarının geri çekilmesi
 
-- `scripts/promote-p1-visual-archive.mjs` yalnızca mevcut 12-capture headless arşivinin PNG/hash
-  bütünlüğünü doğrulayıp, yeni headless `HeadlessChrome` user-agent ve fiziksel GPU probe'u ile
-  `docs/testing/evidence/p1/visual/visual-results.json` yoluna promote eder; yeniden görsel koşu
-  veya insan kalite kararı iddia etmez.
-- Promotion sonucu `node scripts/acceptance-validation.mjs --validate-manifest ...` geçti.
-  Manifest `manifestKind=headless-mechanical-archive`, eski console uyarısı ve native/human
-  review açık kapılarını taşır.
+- `headless:true` / `HeadlessChrome` içeren benchmark, adaptive ve visual kayıtları canonical
+  yollardan diagnostic-headless arşivlerine taşındı; raw evidence silinmedi.
+- Canonical validation artık `headless:false` ve HeadlessChrome içermeyen user-agent ister.
+  Headed yeniden koşu yapılmadı; P1 acceptance beklemede.
 - Tam visual runner'ın GPU kaynak yaşam döngüsü beklemesi çözülmedi; goal native YouTube/CORS/DRM
   ve insan subjektif inceleme kanıtları gelmeden tamamlandı sayılmayacak.
 

@@ -102,12 +102,15 @@ export function assertCanonicalAcceptanceEvidence({
   rawTimingSamples,
   complete,
 }) {
-  if (headless !== true) {
-    throw new Error("P1 canonical evidence reddedildi: headless Chromium zorunludur.");
+  if (headless !== false) {
+    throw new Error("P1 canonical evidence reddedildi: headed Chromium zorunludur.");
   }
 
   if (!Array.isArray(userAgents) || userAgents.length === 0) {
     throw new Error("P1 canonical evidence reddedildi: browser user-agent kanıtı eksik.");
+  }
+  if (userAgents.some((agent) => /HeadlessChrome/i.test(String(agent)))) {
+    throw new Error("P1 canonical evidence reddedildi: HeadlessChrome user-agent geçersiz.");
   }
   assertHardwareGpu(gpuEvidence);
 

@@ -1,0 +1,614 @@
+{
+  "generatedAt": "2026-09-20T08:27:56.736Z",
+  "command": "node scripts/promote-p1-visual-archive.mjs",
+  "fixtureSeed": 20903,
+  "frameIndex": 17,
+  "browser": "Chrome/Playwright visual harness",
+  "chromeExecutable": "configured Chromium binary",
+  "headless": true,
+  "requireHardware": true,
+  "hardwareStatus": "hardware",
+  "gpuSystemInfo": {
+    "hardwareStatus": "hardware",
+    "softwareRendererDetected": false,
+    "softwareReasons": [],
+    "devices": [
+      {
+        "vendorId": 4318,
+        "deviceId": 12036,
+        "vendorString": "",
+        "deviceString": "",
+        "driverVendor": "NVIDIA",
+        "driverVersion": "610.57.4.0"
+      },
+      {
+        "vendorId": 4098,
+        "deviceId": 5710,
+        "vendorString": "",
+        "deviceString": "",
+        "driverVendor": "",
+        "driverVersion": ""
+      }
+    ],
+    "renderer": {
+      "displayType": "ANGLE_VULKAN",
+      "glRenderer": "ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA GeForce RTX 5070 (0x00002F04)), NVIDIA-610.57.4.0)",
+      "glVendor": "Google Inc. (NVIDIA)",
+      "glVersion": "OpenGL ES 3.0 (ANGLE 2.1.28222 git hash: 6dab7c7e742b)",
+      "glImplementationParts": "(gl=egl-angle,angle=vulkan)",
+      "hardwareSupportsVulkan": true
+    },
+    "featureStatus": {
+      "webgpu": "enabled",
+      "vulkan": "enabled_on",
+      "gpuCompositing": "enabled",
+      "videoDecode": "enabled"
+    },
+    "commandLine": ""
+  },
+  "objectiveChecks": {
+    "deterministicFixtureSeed": true,
+    "expectedModes": true,
+    "playbackUnchanged": true,
+    "directAnimePassMap": true,
+    "safeFallbackPassMap": true,
+    "nonBlackOutput": true,
+    "temporalPairChanges": true
+  },
+  "captures": [
+    {
+      "fixture": "halo",
+      "mode": "anime-low",
+      "seed": 20903,
+      "frameIndex": 17,
+      "sourceHash": "2285d46d",
+      "stats": {
+        "qualityLevel": "low",
+        "cpuSubmitMs": 6.400000000372529,
+        "gpuTimeMs": null,
+        "inputSize": {
+          "width": 1920,
+          "height": 1080
+        },
+        "outputSize": {
+          "width": 3840,
+          "height": 2160
+        },
+        "passCount": 1
+      },
+      "playbackBefore": {
+        "muted": true,
+        "volume": 1,
+        "playbackRate": 1,
+        "paused": false,
+        "currentTime": 0
+      },
+      "playbackAfter": {
+        "muted": true,
+        "volume": 1,
+        "playbackRate": 1,
+        "paused": false,
+        "currentTime": 0.602468
+      },
+      "playbackUnchanged": true,
+      "currentTimeDelta": 0.602468,
+      "screenshot": {
+        "file": "anime-low-halo.png",
+        "sha256": "08ed1132bcbbe7495666578b95b17a3562f95edd980d4070ad2b2272cb55bfb1",
+        "bytes": 102742,
+        "nonBlackPixelRatio": 1
+      }
+    },
+    {
+      "fixture": "double-line",
+      "mode": "anime-low",
+      "seed": 20903,
+      "frameIndex": 17,
+      "sourceHash": "83069a09",
+      "stats": {
+        "qualityLevel": "low",
+        "cpuSubmitMs": 1,
+        "gpuTimeMs": null,
+        "inputSize": {
+          "width": 1920,
+          "height": 1080
+        },
+        "outputSize": {
+          "width": 3840,
+          "height": 2160
+        },
+        "passCount": 1
+      },
+      "playbackBefore": {
+        "muted": true,
+        "volume": 1,
+        "playbackRate": 1,
+        "paused": false,
+        "currentTime": 0.602468
+      },
+      "playbackAfter": {
+        "muted": true,
+        "volume": 1,
+        "playbackRate": 1,
+        "paused": false,
+        "currentTime": 0.824422
+      },
+      "playbackUnchanged": true,
+      "currentTimeDelta": 0.22195399999999998,
+      "screenshot": {
+        "file": "anime-low-double-line.png",
+        "sha256": "dced8d6337cc7fcee19e8c34471540d5f54e09fdd8617802e4c982b467e14de0",
+        "bytes": 250950,
+        "nonBlackPixelRatio": 1
+      }
+    },
+    {
+      "fixture": "color-bleed",
+      "mode": "anime-low",
+      "seed": 20903,
+      "frameIndex": 17,
+      "sourceHash": "0e014b95",
+      "stats": {
+        "qualityLevel": "low",
+        "cpuSubmitMs": 1.1000000005587935,
+        "gpuTimeMs": null,
+        "inputSize": {
+          "width": 1920,
+          "height": 1080
+        },
+        "outputSize": {
+          "width": 3840,
+          "height": 2160
+        },
+        "passCount": 1
+      },
+      "playbackBefore": {
+        "muted": true,
+        "volume": 1,
+        "playbackRate": 1,
+        "paused": false,
+        "currentTime": 0.824422
+      },
+      "playbackAfter": {
+        "muted": true,
+        "volume": 1,
+        "playbackRate": 1,
+        "paused": false,
+        "currentTime": 1.024454
+      },
+      "playbackUnchanged": true,
+      "currentTimeDelta": 0.200032,
+      "screenshot": {
+        "file": "anime-low-color-bleed.png",
+        "sha256": "1d3e2025fa450987ae088e37997a0995cc0bbc2105fef44889f477cd33e94417",
+        "bytes": 99580,
+        "nonBlackPixelRatio": 1
+      }
+    },
+    {
+      "fixture": "temporal-shimmer",
+      "mode": "anime-low",
+      "seed": 20903,
+      "frameIndex": 18,
+      "sourceHash": "a3573c21",
+      "temporalPair": {
+        "first": "a215a744",
+        "second": "a3573c21"
+      },
+      "stats": {
+        "qualityLevel": "low",
+        "cpuSubmitMs": 1.2000000001862645,
+        "gpuTimeMs": null,
+        "inputSize": {
+          "width": 1920,
+          "height": 1080
+        },
+        "outputSize": {
+          "width": 3840,
+          "height": 2160
+        },
+        "passCount": 1
+      },
+      "playbackBefore": {
+        "muted": true,
+        "volume": 1,
+        "playbackRate": 1,
+        "paused": false,
+        "currentTime": 1.024454
+      },
+      "playbackAfter": {
+        "muted": true,
+        "volume": 1,
+        "playbackRate": 1,
+        "paused": false,
+        "currentTime": 1.259538
+      },
+      "playbackUnchanged": true,
+      "currentTimeDelta": 0.23508400000000007,
+      "screenshot": {
+        "file": "anime-low-temporal-shimmer.png",
+        "sha256": "5b22803ee28fedabbfe11aabef76820f04124f893a3f8398ef1eef56d43511fa",
+        "bytes": 331461,
+        "nonBlackPixelRatio": 1
+      }
+    },
+    {
+      "fixture": "halo",
+      "mode": "anime-high",
+      "seed": 20903,
+      "frameIndex": 17,
+      "sourceHash": "2285d46d",
+      "stats": {
+        "qualityLevel": "high",
+        "cpuSubmitMs": 6.400000000372529,
+        "gpuTimeMs": null,
+        "inputSize": {
+          "width": 1920,
+          "height": 1080
+        },
+        "outputSize": {
+          "width": 3840,
+          "height": 2160
+        },
+        "passCount": 2
+      },
+      "playbackBefore": {
+        "muted": true,
+        "volume": 1,
+        "playbackRate": 1,
+        "paused": false,
+        "currentTime": 0
+      },
+      "playbackAfter": {
+        "muted": true,
+        "volume": 1,
+        "playbackRate": 1,
+        "paused": false,
+        "currentTime": 0.597036
+      },
+      "playbackUnchanged": true,
+      "currentTimeDelta": 0.597036,
+      "screenshot": {
+        "file": "anime-high-halo.png",
+        "sha256": "d0ddc7713d50064fee96b6d1eb81e8b352eafce4e80d5a03acb1be6becb639bc",
+        "bytes": 102374,
+        "nonBlackPixelRatio": 1
+      }
+    },
+    {
+      "fixture": "double-line",
+      "mode": "anime-high",
+      "seed": 20903,
+      "frameIndex": 17,
+      "sourceHash": "83069a09",
+      "stats": {
+        "qualityLevel": "high",
+        "cpuSubmitMs": 1.2000000001862645,
+        "gpuTimeMs": null,
+        "inputSize": {
+          "width": 1920,
+          "height": 1080
+        },
+        "outputSize": {
+          "width": 3840,
+          "height": 2160
+        },
+        "passCount": 2
+      },
+      "playbackBefore": {
+        "muted": true,
+        "volume": 1,
+        "playbackRate": 1,
+        "paused": false,
+        "currentTime": 0.597036
+      },
+      "playbackAfter": {
+        "muted": true,
+        "volume": 1,
+        "playbackRate": 1,
+        "paused": false,
+        "currentTime": 0.825372
+      },
+      "playbackUnchanged": true,
+      "currentTimeDelta": 0.22833599999999998,
+      "screenshot": {
+        "file": "anime-high-double-line.png",
+        "sha256": "bc095a8dffe0710f59870fe97c459d557985819c8ef12f170ac1eeba4c848649",
+        "bytes": 254142,
+        "nonBlackPixelRatio": 1
+      }
+    },
+    {
+      "fixture": "color-bleed",
+      "mode": "anime-high",
+      "seed": 20903,
+      "frameIndex": 17,
+      "sourceHash": "0e014b95",
+      "stats": {
+        "qualityLevel": "high",
+        "cpuSubmitMs": 1,
+        "gpuTimeMs": null,
+        "inputSize": {
+          "width": 1920,
+          "height": 1080
+        },
+        "outputSize": {
+          "width": 3840,
+          "height": 2160
+        },
+        "passCount": 2
+      },
+      "playbackBefore": {
+        "muted": true,
+        "volume": 1,
+        "playbackRate": 1,
+        "paused": false,
+        "currentTime": 0.825372
+      },
+      "playbackAfter": {
+        "muted": true,
+        "volume": 1,
+        "playbackRate": 1,
+        "paused": false,
+        "currentTime": 1.025397
+      },
+      "playbackUnchanged": true,
+      "currentTimeDelta": 0.2000249999999999,
+      "screenshot": {
+        "file": "anime-high-color-bleed.png",
+        "sha256": "02f2db076c15156284b5ffdf8ff1117a88742a9a599b463651ba40c91ed2ff05",
+        "bytes": 99305,
+        "nonBlackPixelRatio": 1
+      }
+    },
+    {
+      "fixture": "temporal-shimmer",
+      "mode": "anime-high",
+      "seed": 20903,
+      "frameIndex": 18,
+      "sourceHash": "a3573c21",
+      "temporalPair": {
+        "first": "a215a744",
+        "second": "a3573c21"
+      },
+      "stats": {
+        "qualityLevel": "high",
+        "cpuSubmitMs": 1.400000000372529,
+        "gpuTimeMs": null,
+        "inputSize": {
+          "width": 1920,
+          "height": 1080
+        },
+        "outputSize": {
+          "width": 3840,
+          "height": 2160
+        },
+        "passCount": 2
+      },
+      "playbackBefore": {
+        "muted": true,
+        "volume": 1,
+        "playbackRate": 1,
+        "paused": false,
+        "currentTime": 1.025397
+      },
+      "playbackAfter": {
+        "muted": true,
+        "volume": 1,
+        "playbackRate": 1,
+        "paused": false,
+        "currentTime": 1.261083
+      },
+      "playbackUnchanged": true,
+      "currentTimeDelta": 0.23568600000000006,
+      "screenshot": {
+        "file": "anime-high-temporal-shimmer.png",
+        "sha256": "8f17e611ac9de407bc6e24842a391d730bd22abd0410e73fc5c29c169fe49f94",
+        "bytes": 332327,
+        "nonBlackPixelRatio": 1
+      }
+    },
+    {
+      "fixture": "halo",
+      "mode": "safe-fallback",
+      "seed": 20903,
+      "frameIndex": 17,
+      "sourceHash": "2285d46d",
+      "stats": {
+        "qualityLevel": "low",
+        "cpuSubmitMs": 19,
+        "gpuTimeMs": null,
+        "inputSize": {
+          "width": 1920,
+          "height": 1080
+        },
+        "outputSize": {
+          "width": 3840,
+          "height": 2160
+        },
+        "passCount": 1
+      },
+      "playbackBefore": {
+        "muted": true,
+        "volume": 1,
+        "playbackRate": 1,
+        "paused": false,
+        "currentTime": 0
+      },
+      "playbackAfter": {
+        "muted": true,
+        "volume": 1,
+        "playbackRate": 1,
+        "paused": false,
+        "currentTime": 0.604113
+      },
+      "playbackUnchanged": true,
+      "currentTimeDelta": 0.604113,
+      "screenshot": {
+        "file": "safe-fallback-halo.png",
+        "sha256": "13eff6558050239869da9712877f37c5664da3b5a3280f5aa984408f9166524e",
+        "bytes": 101215,
+        "nonBlackPixelRatio": 1
+      }
+    },
+    {
+      "fixture": "double-line",
+      "mode": "safe-fallback",
+      "seed": 20903,
+      "frameIndex": 17,
+      "sourceHash": "83069a09",
+      "stats": {
+        "qualityLevel": "low",
+        "cpuSubmitMs": 5.699999999254942,
+        "gpuTimeMs": null,
+        "inputSize": {
+          "width": 1920,
+          "height": 1080
+        },
+        "outputSize": {
+          "width": 3840,
+          "height": 2160
+        },
+        "passCount": 1
+      },
+      "playbackBefore": {
+        "muted": true,
+        "volume": 1,
+        "playbackRate": 1,
+        "paused": false,
+        "currentTime": 0.604113
+      },
+      "playbackAfter": {
+        "muted": true,
+        "volume": 1,
+        "playbackRate": 1,
+        "paused": false,
+        "currentTime": 0.824207
+      },
+      "playbackUnchanged": true,
+      "currentTimeDelta": 0.220094,
+      "screenshot": {
+        "file": "safe-fallback-double-line.png",
+        "sha256": "a1aa9a5358b41b2e7ce65d1334e23112a2925dfd21af5a4aaa52ba65545124c5",
+        "bytes": 248462,
+        "nonBlackPixelRatio": 1
+      }
+    },
+    {
+      "fixture": "color-bleed",
+      "mode": "safe-fallback",
+      "seed": 20903,
+      "frameIndex": 17,
+      "sourceHash": "0e014b95",
+      "stats": {
+        "qualityLevel": "low",
+        "cpuSubmitMs": 5.7999999998137355,
+        "gpuTimeMs": null,
+        "inputSize": {
+          "width": 1920,
+          "height": 1080
+        },
+        "outputSize": {
+          "width": 3840,
+          "height": 2160
+        },
+        "passCount": 1
+      },
+      "playbackBefore": {
+        "muted": true,
+        "volume": 1,
+        "playbackRate": 1,
+        "paused": false,
+        "currentTime": 0.824207
+      },
+      "playbackAfter": {
+        "muted": true,
+        "volume": 1,
+        "playbackRate": 1,
+        "paused": false,
+        "currentTime": 1.024365
+      },
+      "playbackUnchanged": true,
+      "currentTimeDelta": 0.20015799999999995,
+      "screenshot": {
+        "file": "safe-fallback-color-bleed.png",
+        "sha256": "e27514db0daada8a346a83c6d0b9c620f7d41753023a0db3b82cd3ef602560fe",
+        "bytes": 101989,
+        "nonBlackPixelRatio": 1
+      }
+    },
+    {
+      "fixture": "temporal-shimmer",
+      "mode": "safe-fallback",
+      "seed": 20903,
+      "frameIndex": 18,
+      "sourceHash": "a3573c21",
+      "temporalPair": {
+        "first": "a215a744",
+        "second": "a3573c21"
+      },
+      "stats": {
+        "qualityLevel": "low",
+        "cpuSubmitMs": 5.7000000001862645,
+        "gpuTimeMs": null,
+        "inputSize": {
+          "width": 1920,
+          "height": 1080
+        },
+        "outputSize": {
+          "width": 3840,
+          "height": 2160
+        },
+        "passCount": 1
+      },
+      "playbackBefore": {
+        "muted": true,
+        "volume": 1,
+        "playbackRate": 1,
+        "paused": false,
+        "currentTime": 1.024365
+      },
+      "playbackAfter": {
+        "muted": true,
+        "volume": 1,
+        "playbackRate": 1,
+        "paused": false,
+        "currentTime": 1.261005
+      },
+      "playbackUnchanged": true,
+      "currentTimeDelta": 0.23663999999999996,
+      "screenshot": {
+        "file": "safe-fallback-temporal-shimmer.png",
+        "sha256": "f4b7a96cfd48de7d88441284af5347cec9cd50f592a3f74d0fc4130b9421de02",
+        "bytes": 333343,
+        "nonBlackPixelRatio": 1
+      }
+    }
+  ],
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "humanReviewRequired": true,
+  "sourceReports": [
+    "visual-results-anime-low.json",
+    "visual-results-anime-high.json",
+    "visual-results-safe-fallback.json"
+  ],
+  "manifestKind": "headless-mechanical-archive",
+  "sourceArchive": "docs/testing/evidence/p1/visual/archive-diagnostic-headless-2026-09-15/visual-results.json",
+  "sourceArchiveGeneratedAt": "2026-09-15T14:46:02.605Z",
+  "sourceArchiveConsoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "userAgents": [
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36"
+  ],
+  "nativeYouTubeReviewRequired": true,
+  "acceptanceStatus": "mechanical-only; human/native review pending",
+  "promotionChecks": {
+    "archiveCaptureCount": true,
+    "archivedPngHashes": true,
+    "headlessUserAgent": true,
+    "physicalGpuProbe": true
+  }
+}

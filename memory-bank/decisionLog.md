@@ -1,5 +1,15 @@
 # Decision Log
 
+## D-029 — Headless P1 evidence is diagnostic only
+
+- Tarih: 2026-09-20
+- Durum: Accepted
+- Karar: P1 canonical evidence must use `headless:false` and a user-agent that
+  does not contain `HeadlessChrome`. Physical GPU evidence cannot override this.
+  Existing headless JSON/PNG records remain preserved in diagnostic archives.
+- Gerekçe: Headless results do not satisfy the user's canonical acceptance
+  policy; removing them from canonical paths prevents accidental overclaiming.
+
 ## D-027 — Harici zip aracına bağımlı olmayan deterministik release arşivi
 
 - Tarih: 2026-09-20
@@ -251,3 +261,12 @@
   eski console uyarısı ve `humanReviewRequired`/`nativeYouTubeReviewRequired` alanlarını korur.
 - Gerekçe: Kullanıcının headless-only politikasını bozmadan validator'ın user-agent/provenance
   gereksinimini karşılamak ve tanı arşivini yeni görsel koşu gibi sunmamak.
+
+## D-030 — Headless evidence correction supersedes prior promotion policy
+
+- Tarih: 2026-09-20
+- Durum: Accepted; supersedes the prior headless promotion wording
+- Karar: `headless:true` veya `HeadlessChrome` içeren P1 kayıtları canonical
+  acceptance değildir. Raw JSON/PNG korunur ancak diagnostic-headless arşivinde
+  tutulur; canonical validator headed (`headless:false`) ve normal UA ister.
+- Gerekçe: Fiziksel GPU sonucu headless acceptance politikasını override edemez.

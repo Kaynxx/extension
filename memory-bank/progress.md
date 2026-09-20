@@ -1,5 +1,13 @@
 # Progress
 
+## 2026-09-20 P1 canonical evidence correction
+
+- `headless:true` / `HeadlessChrome` benchmark, adaptive and visual records were
+  moved from canonical paths into explicit diagnostic-headless archives; raw
+  JSON/PNG files remain preserved.
+- Canonical validation now requires headed (`headless:false`) Chromium and a
+  normal user-agent. No headed run was started; P1 acceptance is pending.
+
 Son güncelleme: 2026-09-20
 
 ## 2026-09-20 statik kapanış doğrulaması
@@ -15,9 +23,8 @@ Son güncelleme: 2026-09-20
 
 - 12 mevcut headless PNG'nin SHA-256 ve byte değerleri yeniden doğrulandı; fiziksel RTX 5070
   WebGPU/Vulkan probe'u ve `HeadlessChrome` user-agent kanıtı tazelendi.
-- `docs/testing/evidence/p1/visual/visual-results.json` archive provenance ile yazıldı ve
-  acceptance validator geçti. Bu yalnız mekanik kanıttır; eski console uyarısı, native YouTube
-  compositor/CORS/DRM ve insan halo/çift çizgi/renk lekesi/titreşim kararı açık kalır.
+- Headless kayıtlar fiziksel GPU bildirse de acceptance için geçersizdir; raw JSON/PNG'ler
+  diagnostic-headless arşivlerine taşındı. Canonical headed koşu bekliyor.
 
 ## 2026-09-20 P2/P3 statik profil yolu
 
@@ -35,15 +42,15 @@ Son güncelleme: 2026-09-20
 
 ## Genel durum
 
-| Alan                        | Durum                               | Kanıt                                                  |
-| --------------------------- | ----------------------------------- | ------------------------------------------------------ |
-| MV3/toolchain               | Doğrulandı                          | `npm run check` ve build                               |
-| YouTube video/overlay       | Fixture düzeyinde doğrulandı        | headless extension harness; native YouTube açık        |
-| Latest-frame-wins/metrikler | Production + unit kanıtlı           | `FrameScheduler`, `RollingFrameMetrics`, adaptive JSON |
-| Adaptif kalite              | Headless stress ile doğrulandı      | high→low, 120 low örneği, 5 s recovery                 |
-| Anime4K backend             | İki gerçek pass seviyesi            | low=1 pass, high=2 pass; direct x2/x3                  |
-| P1 performans               | Headless fiziksel GPU'da tamamlandı | Güncel 4×120, 24/30 FPS p95 7.60–10.00 ms              |
-| P1 görsel mekanik kayıt     | Tamamlandı; insan incelemesi açık   | 12 capture ve visual manifest                          |
+| Alan                        | Durum                          | Kanıt                                                  |
+| --------------------------- | ------------------------------ | ------------------------------------------------------ |
+| MV3/toolchain               | Doğrulandı                     | `npm run check` ve build                               |
+| YouTube video/overlay       | Fixture düzeyinde doğrulandı   | headless extension harness; native YouTube açık        |
+| Latest-frame-wins/metrikler | Production + unit kanıtlı      | `FrameScheduler`, `RollingFrameMetrics`, adaptive JSON |
+| Adaptif kalite              | Headless stress ile doğrulandı | high→low, 120 low örneği, 5 s recovery                 |
+| Anime4K backend             | İki gerçek pass seviyesi       | low=1 pass, high=2 pass; direct x2/x3                  |
+| P1 performans               | Bekliyor; headed kanıt gerekli | Headless ölçüm diagnostic arşivde                      |
+| P1 görsel mekanik kayıt     | Bekliyor; headed kanıt gerekli | Headless capture diagnostic arşivde                    |
 
 ## P1 kabul matrisi
 
@@ -55,11 +62,9 @@ Son güncelleme: 2026-09-20
 
 ## Kanıt dosyaları
 
-- `docs/testing/evidence/p1/benchmark-results.json`
-- `docs/testing/evidence/p1/adaptive-results.json`
-- `docs/testing/evidence/p1/visual/visual-results.json`
-- `docs/testing/evidence/p1/visual/archive-diagnostic-headless-2026-09-15/visual-results.json`
-- `docs/testing/evidence/p1/visual/archive-diagnostic-headless-2026-09-15/*.png`
+- `docs/testing/evidence/p1/archive-diagnostic-headless-2026-09-20/benchmark-results.json`
+- `docs/testing/evidence/p1/archive-diagnostic-headless-adaptive-2026-09-20/adaptive-results.json`
+- `docs/testing/evidence/p1/visual/archive-diagnostic-headless-2026-09-20/visual-results.json`
 
 Benchmark JSON'ı artık processing timing serilerinin yanında `mainThreadSamplesMs` ve
 main-thread p50/p95/p99 özetlerini de taşıyor; bu alanlar her koşu için raw seriden validator

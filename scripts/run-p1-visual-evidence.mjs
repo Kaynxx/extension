@@ -12,12 +12,10 @@ import { launchP1Browser } from "./p1-browser.mjs";
 const root = process.cwd();
 const port = Number(process.env.P1_VISUAL_PORT ?? 4174);
 const chromeExecutable = process.env.P1_CHROME_BIN ?? "chromium";
-if (process.env.P1_VISUAL_HEADLESS === "false") {
-  throw new Error(
-    "Bu çalışma alanında kullanıcı talimatı gereği headed/desktop testleri kapalıdır.",
-  );
+if (process.env.P1_VISUAL_HEADLESS === "true") {
+  throw new Error("Canonical P1 evidence cannot be produced from a headless surface.");
 }
-const headless = true;
+const headless = false;
 const requireHardware = true;
 const outputDirectory = path.join(root, "docs/testing/evidence/p1/visual");
 const harnessUrl = `http://127.0.0.1:${port}/tests/harness/p1-visual.html`;

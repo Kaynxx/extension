@@ -74,30 +74,32 @@ describe("benchmark GPU evidence gate", () => {
 
 describe("canonical P1 acceptance evidence gate", () => {
   const validEvidence = () => ({
-    headless: true,
-    userAgents: ["Mozilla/5.0 HeadlessChrome/151.0.0.0 Safari/537.36"],
+    headless: false,
+    userAgents: [
+      "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/151.0.0.0 Safari/537.36",
+    ],
     gpuEvidence: hardwareEvidence(),
     rawTimingSamples: [[8.1, 8.4, 8.2]],
     complete: true,
   });
 
-  it("accepts complete headless physical-GPU evidence with raw samples", () => {
+  it("accepts complete headed physical-GPU evidence with raw samples", () => {
     expect(() => assertCanonicalAcceptanceEvidence(validEvidence())).not.toThrow();
   });
 
-  it("rejects a headed launch flag", () => {
-    expect(() =>
-      assertCanonicalAcceptanceEvidence({ ...validEvidence(), headless: false }),
-    ).toThrow(/headless Chromium/i);
+  it("rejects a headless launch flag", () => {
+    expect(() => assertCanonicalAcceptanceEvidence({ ...validEvidence(), headless: true })).toThrow(
+      /headed Chromium/i,
+    );
   });
 
-  it("accepts the HeadlessChrome user-agent", () => {
+  it("rejects the HeadlessChrome user-agent even with a hardware renderer", () => {
     expect(() =>
       assertCanonicalAcceptanceEvidence({
         ...validEvidence(),
         userAgents: ["Mozilla/5.0 HeadlessChrome/151.0.0.0"],
       }),
-    ).not.toThrow();
+    ).toThrow(/HeadlessChrome/i);
   });
 
   it("rejects a software renderer", () => {

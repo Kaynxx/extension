@@ -9,16 +9,16 @@ export const P2_P3_SCALES = [2, 3];
 
 const SHA256 = /^[a-f0-9]{64}$/i;
 
-export function assertHeadlessValidationSurface({ headless, userAgents, hardwareStatus }) {
-  if (headless !== true) {
-    throw new Error("Kabul yüzeyi headless Chromium olmalıdır; headed/desktop koşu yasaktır.");
+export function assertHeadedValidationSurface({ headless, userAgents, hardwareStatus }) {
+  if (headless !== false) {
+    throw new Error("Kabul yüzeyi headed Chromium olmalıdır; headless koşu geçersizdir.");
   }
   if (
     !Array.isArray(userAgents) ||
     userAgents.length === 0 ||
-    !userAgents.some((agent) => /HeadlessChrome/i.test(String(agent)))
+    userAgents.some((agent) => /HeadlessChrome/i.test(String(agent)))
   ) {
-    throw new Error("Kabul yüzeyi HeadlessChrome user-agent kanıtı ister.");
+    throw new Error("Kabul yüzeyi HeadlessChrome user-agent kabul etmez.");
   }
   if (hardwareStatus !== "hardware") {
     throw new Error("Kabul yüzeyi fiziksel GPU/WebGPU kanıtı ister.");
@@ -28,7 +28,7 @@ export function assertHeadlessValidationSurface({ headless, userAgents, hardware
 export function validateCanonicalVisualManifest(manifest) {
   const errors = [];
   try {
-    assertHeadlessValidationSurface(manifest ?? {});
+    assertHeadedValidationSurface(manifest ?? {});
   } catch (error) {
     errors.push(error instanceof Error ? error.message : String(error));
   }
@@ -71,7 +71,7 @@ export function validateCanonicalVisualManifest(manifest) {
 
 export function buildAcceptancePlan() {
   return {
-    policy: "headless-only-when-user-runs-it",
+    policy: "headed-only; headless evidence is invalid",
     browserRunsStarted: false,
     nativeYouTube: {
       status: "pending-non-desktop-human-review",
@@ -85,11 +85,11 @@ export function buildAcceptancePlan() {
       ],
     },
     p1Visual: {
-      status: "pending-headless-physical-gpu-run",
+      status: "pending-headed-physical-gpu-run",
       modes: P1_VISUAL_MODES,
       fixtures: P1_VISUAL_FIXTURES,
       canonicalPath: "docs/testing/evidence/p1/visual/visual-results.json",
-      writeRule: "write only after all 12 headless physical-GPU captures and raw hashes pass",
+      writeRule: "write only after all 12 headed physical-GPU captures and raw hashes pass",
     },
     p2P3: {
       status: "pending-real-model-comparison",

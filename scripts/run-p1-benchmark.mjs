@@ -13,12 +13,10 @@ const root = process.cwd();
 const port = Number(process.env.P1_BENCHMARK_PORT ?? 4173);
 const frames = Number(process.env.P1_BENCHMARK_FRAMES ?? 120);
 const chromeExecutable = process.env.P1_CHROME_BIN ?? "chromium";
-if (process.env.P1_HEADLESS === "false") {
-  throw new Error(
-    "Bu çalışma alanında kullanıcı talimatı gereği headed/desktop testleri kapalıdır.",
-  );
+if (process.env.P1_HEADLESS === "true") {
+  throw new Error("Canonical P1 evidence cannot be produced from a headless surface.");
 }
-const headless = true;
+const headless = false;
 const requireHardware = true;
 const writeEvidence = process.env.P1_WRITE_EVIDENCE !== "false";
 const evidenceDirectory = path.join(root, "docs/testing/evidence/p1");

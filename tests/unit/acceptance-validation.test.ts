@@ -18,8 +18,10 @@ function validManifest() {
     })),
   );
   return {
-    headless: true,
-    userAgents: ["Mozilla/5.0 HeadlessChrome/151.0.0.0 Safari/537.36"],
+    headless: false,
+    userAgents: [
+      "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/151.0.0.0 Safari/537.36",
+    ],
     hardwareStatus: "hardware",
     requireHardware: true,
     humanReviewRequired: true,
@@ -50,16 +52,17 @@ describe("acceptance validation preparation", () => {
     expect(plan.p2P3.matrix).toHaveLength(4);
   });
 
-  it("accepts only a complete headless visual manifest", () => {
+  it("accepts only a complete headed visual manifest", () => {
     expect(validateCanonicalVisualManifest(validManifest()).valid).toBe(true);
   });
 
-  it("rejects headed or incomplete manifests", () => {
+  it("rejects headless or incomplete manifests", () => {
     const manifest = validManifest();
-    manifest.headless = false;
+    manifest.headless = true;
+    manifest.userAgents = ["Mozilla/5.0 HeadlessChrome/151.0.0.0"];
     manifest.captures.pop();
     const result = validateCanonicalVisualManifest(manifest);
     expect(result.valid).toBe(false);
-    expect(result.errors.join(" ")).toMatch(/headed|capture/i);
+    expect(result.errors.join(" ")).toMatch(/headless|capture/i);
   });
 });

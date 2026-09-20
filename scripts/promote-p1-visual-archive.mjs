@@ -6,11 +6,11 @@ import { assertHardwareGpu, summarizeGpuSystemInfo } from "./gpu-evidence.mjs";
 import { launchP1Browser } from "./p1-browser.mjs";
 
 /**
- * Promote an already captured, headless visual archive to the canonical path.
+ * Promote an already captured, headed visual archive to the canonical path.
  *
  * This is deliberately not a visual rerun: it verifies every archived PNG and
- * obtains fresh headless user-agent/GPU provenance. The output remains marked
- * mechanical-only so it cannot be mistaken for native YouTube or human review.
+ * obtains fresh headed user-agent/GPU provenance. Headless archives remain
+ * mechanical-only and still requires native/human review.
  */
 const root = process.cwd();
 const archiveDirectory = path.join(
@@ -22,15 +22,13 @@ const outputDirectory = path.join(root, "docs/testing/evidence/p1/visual");
 const outputManifestPath = path.join(outputDirectory, "visual-results.json");
 const chromeExecutable = process.env.P1_CHROME_BIN ?? "chromium";
 
-if (process.env.P1_VISUAL_HEADLESS === "false") {
-  throw new Error(
-    "Bu çalışma alanında kullanıcı talimatı gereği headed/desktop testleri kapalıdır.",
-  );
+if (process.env.P1_VISUAL_HEADLESS === "true") {
+  throw new Error("Canonical P1 evidence cannot be produced from a headless surface.");
 }
 
 const archive = JSON.parse(await readFile(archiveManifestPath, "utf8"));
-if (archive.headless !== true || archive.requireHardware !== true) {
-  throw new Error("Görsel arşiv headless + requireHardware kanıtını taşımıyor.");
+if (archive.headless !== false || archive.requireHardware !== true) {
+  throw new Error("Görsel arşiv headed + requireHardware kanıtını taşımıyor.");
 }
 if (archive.hardwareStatus !== "hardware") {
   throw new Error("Görsel arşiv fiziksel GPU durumunu doğrulamıyor.");
@@ -57,7 +55,7 @@ for (const capture of archive.captures) {
   }
 }
 
-const browser = await launchP1Browser({ chromeExecutable, headless: true });
+const browser = await launchP1Browser({ chromeExecutable, headless: false });
 try {
   const gpuClient = await browser.newBrowserCDPSession();
   const gpuSystemInfo = summarizeGpuSystemInfo(await gpuClient.send("SystemInfo.getInfo"));
@@ -65,21 +63,21 @@ try {
   const page = await browser.newPage();
   const userAgent = await page.evaluate(() => navigator.userAgent);
   await page.close();
-  if (!/HeadlessChrome/i.test(userAgent)) {
-    throw new Error("Açılan doğrulama yüzeyi HeadlessChrome user-agent taşımıyor.");
+  if (/HeadlessChrome/i.test(userAgent)) {
+    throw new Error("Açılan doğrulama yüzeyi HeadlessChrome user-agent taşıyor.");
   }
 
   const report = {
     ...archive,
     generatedAt: new Date().toISOString(),
     command: "node scripts/promote-p1-visual-archive.mjs",
-    manifestKind: "headless-mechanical-archive",
+    manifestKind: "headed-mechanical-archive",
     sourceArchive: path.relative(root, archiveManifestPath),
     sourceArchiveGeneratedAt: archive.generatedAt,
     sourceArchiveConsoleErrors: archive.consoleErrors ?? [],
     userAgents: [userAgent],
     chromeExecutable,
-    headless: true,
+    headless: false,
     requireHardware: true,
     hardwareStatus: gpuSystemInfo.hardwareStatus,
     gpuSystemInfo,
@@ -89,7 +87,7 @@ try {
     promotionChecks: {
       archiveCaptureCount: archive.captures.length === 12,
       archivedPngHashes: true,
-      headlessUserAgent: true,
+      headedUserAgent: true,
       physicalGpuProbe: true,
     },
   };
