@@ -52,7 +52,7 @@ try {
     (transition) => transition.from === "low" && transition.to === "high",
   );
   const checks = {
-    headless,
+    headed: headless === false,
     hardware: gpuSystemInfo.hardwareStatus === "hardware",
     highToLow: Boolean(downgrade),
     overloadExceededBudget: result.overloadPhase.p95Ms > result.frameBudgetMs,
