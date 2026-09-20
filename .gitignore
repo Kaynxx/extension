@@ -32,6 +32,9 @@ Thumbs.db
 playwright-report/
 test-results/
 
+# Local/raw acceptance evidence (never part of the source baseline)
+docs/testing/evidence/
+
 # Downloaded model cache
 models/cache/
 *.onnx.data
