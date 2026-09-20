@@ -21,6 +21,7 @@
     "package:release": "npm run build && node scripts/package-release.mjs",
     "test:p1-visual": "node scripts/run-p1-visual-evidence.mjs",
     "test:p2-p3": "node scripts/run-p2-p3-evidence.mjs",
+    "test:p4-temporal": "node scripts/run-p4-temporal-evidence.mjs",
     "test:p1-visual-manifest": "node scripts/promote-p1-visual-archive.mjs",
     "test:acceptance-plan": "node scripts/acceptance-validation.mjs --plan",
     "test:acceptance-manifest": "node scripts/acceptance-validation.mjs --validate-manifest",

@@ -76,6 +76,7 @@ export class Anime4kBackend implements UpscalerBackend {
   private temporalBuffer: GPUBuffer | undefined;
   private historyTexture: GPUTexture | undefined;
   private historyValid = false;
+  private temporalEnabled = true;
   private inputSize: FrameSize = { width: 0, height: 0 };
   private outputSize: FrameSize = { width: 0, height: 0 };
   private qualityLevel: QualityLevel = "low";
@@ -257,6 +258,14 @@ export class Anime4kBackend implements UpscalerBackend {
     this.writeTemporalParameters();
   }
 
+  /** P4 evidence and future policy layers may disable history without changing the spatial path. */
+  setTemporalEnabled(enabled: boolean): void {
+    this.requireUsable();
+    this.temporalEnabled = enabled;
+    this.historyValid = false;
+    this.writeTemporalParameters();
+  }
+
   async prepare(source: RenderSource): Promise<PreparedFrame> {
     this.requireUsable();
     if (this.preparing || this.activeFrameToken !== undefined) {
@@ -405,7 +414,7 @@ export class Anime4kBackend implements UpscalerBackend {
           [this.outputSize.width, this.outputSize.height, 1],
         );
         device.queue.submit([encoder.finish()]);
-        this.historyValid = true;
+        this.historyValid = this.temporalEnabled;
         this.writeTemporalParameters();
       },
       discard: () => {
@@ -441,7 +450,7 @@ export class Anime4kBackend implements UpscalerBackend {
       new Float32Array([
         TEMPORAL_STABILIZATION.blend,
         TEMPORAL_STABILIZATION.gate,
-        this.historyValid ? 1 : 0,
+        this.temporalEnabled && this.historyValid ? 1 : 0,
         0,
       ]),
     );
