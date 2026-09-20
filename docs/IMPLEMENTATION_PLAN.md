@@ -9,6 +9,12 @@ Mevcut aşama: P5 statik manga MVP; P1/P2/P3/P4 kabul doğrulaması sürüyor
 > kapanmadığı için proje tamamlandı sayılmaz. Ayrıntılı durum `README.md`,
 > `docs/testing/P1_VALIDATION.md` ve `memory-bank/progress.md` içindedir.
 
+2026-09-20 reconciliation: P1 benchmark/adaptive koşulları headed fiziksel GPU üzerinde
+tamamlandı; headed visual manifest 12 capture ile mekanik guard'ları geçiyor, fakat insan/native
+kabulü açık. P2/P3 yalnız bundled WebGPU baseline'ı 8 koşulda ölçüldü; gerçek WebSR/RT4KSR
+adayları, OCR/halo ve model karşılaştırması tamamlanmadı. Native YouTube 401/403 ve overlay
+kaybı nedeniyle kısmi; P4 temporal model ve P6 yayın kapıları açık.
+
 ## 1. Başarı Tanımı
 
 Eklenti, desteklenen bir YouTube videosunda kullanıcının cihazından ayrılmadan WebGPU ile iyileştirilmiş görüntü üretmeli ve:

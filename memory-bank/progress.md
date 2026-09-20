@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-09-20 latest evidence reconciliation
+
+- Headed P1 benchmark/adaptive artifacts are now authoritative at `docs/testing/evidence/p1/benchmark-results.json` and `adaptive-results.json`: 4×120 complete benchmark samples, no failed/GPU-error frames, and all adaptive guards true on RTX 5070/Vulkan/WebGPU.
+- `docs/testing/evidence/p1/visual/visual-results.json` is the current headed mechanical manifest: 12 captures and objective guards pass, but `humanReviewRequired:true`; native YouTube remains partial (401/403 and overlay loss).
+- P2/P3 `p2-p3-results.json` contains only the bundled baseline (8 headed cells, 120/120 presented, no GPU errors). Real WebSR/RT4KSR candidates and OCR/halo/model comparison remain pending.
+
 ## 2026-09-20 P1 canonical evidence correction
 
 - `headless:true` / `HeadlessChrome` benchmark, adaptive and visual records were

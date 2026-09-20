@@ -7,6 +7,13 @@
 - Existing headless outputs are preserved under explicit diagnostic-headless
   archives and absent from canonical paths. Headed runs were not started.
 
+## 2026-09-20 latest headed evidence reconciliation
+
+- Current root P1 benchmark/adaptive JSONs are headed (`headless:false`) with normal Chrome/151
+  UA, physical RTX 5070/Vulkan/WebGPU, complete raw samples, and no failed/GPU-error frames.
+- Root visual manifest is a headed 12-capture mechanical artifact with all objective checks true;
+  human review remains required. P2/P3 is a bundled baseline only; WebSR/RT4KSR are pending.
+
 ## 2026-09-20 headed visual harness recovery
 
 - The first headed visual failure lost the WebGPU device during fixture capture while the source
