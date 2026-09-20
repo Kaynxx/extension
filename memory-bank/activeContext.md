@@ -10,6 +10,17 @@
 - No headed/browser/GPU run was started in this session; P1 canonical evidence is
   pending and old headless records are diagnostic only.
 
+## 2026-09-20 headed visual device-loss audit
+
+- Interrupted headed visual evidence recorded `Anime4kBackendError: WebGPU cihazı kaybedildi`
+  during fixture capture; the associated failure record is diagnostic and canonical promotion
+  remained false.
+- The uncommitted harness fix removes `canvas.captureStream()` external-image ownership, uses
+  owned `ImageBitmap`/`VideoFrame` snapshots, closes snapshots deterministically, waits for queue
+  completion, and records uncaptured/device-lost diagnostics.
+- Follow-up headed diagnostic produced 12 hash-valid captures and no observed device loss, but
+  content-crop/human visual review remained failed; visual acceptance stays pending.
+
 Son güncelleme: 2026-09-20
 
 ## 2026-09-20 statik kapanış durumu

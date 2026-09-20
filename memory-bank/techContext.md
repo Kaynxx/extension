@@ -7,6 +7,15 @@
 - Existing headless outputs are preserved under explicit diagnostic-headless
   archives and absent from canonical paths. Headed runs were not started.
 
+## 2026-09-20 headed visual harness recovery
+
+- The first headed visual failure lost the WebGPU device during fixture capture while the source
+  canvas was exposed through `captureStream()`. The fixture harness now keeps the video only as a
+  playback sentinel and supplies owned `ImageBitmap`/`VideoFrame` snapshots to the backend.
+- Queue completion, explicit snapshot close, and `uncapturederror`/`device.lost` diagnostics are
+  recorded. Follow-up diagnostic captures had no observed device loss, but visual human/crop review
+  remains an acceptance blocker.
+
 ## Hedef Platform
 
 - Birincil: Güncel masaüstü Google Chrome

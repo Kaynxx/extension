@@ -10,6 +10,13 @@ Canonical benchmark/adaptive/görsel kabul kanıtı headed Chromium olmalıdır.
 adlı diagnostic-headless arşivde tutulur. Canonical kapı headed flag, normal user-agent, fiziksel
 GPU, yazılım renderer reddi, ham zaman serileri ve tamamlanmış koşuları zorunlu tutar.
 
+Son headed visual denemesinde ilk hata `Anime4kBackendError: WebGPU cihazı kaybedildi` idi.
+Tanı, fixture `canvas.captureStream()` kaynağının headed Vulkan WebGPU external-image yaşam
+döngüsüyle çakışabileceğini gösterdi. Harness artık fixture'ı sahipli `ImageBitmap`/`VideoFrame`
+olarak veriyor ve kaynağı açıkça kapatıyor; sonraki tanı koşusunda `deviceLost` gözlenmedi.
+Bu düzeltme visual kanıtı otomatik olarak kabul etmez: içerik kırpma/insan incelemesi başarısız
+kaldığı için headed visual manifest hâlâ pending ve diagnostic arşivde tutuluyor.
+
 ## P1 kabul matrisi
 
 | P1 kriteri                                    | Durum                                         | Kanıt                                                       |

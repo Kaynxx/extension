@@ -8,6 +8,15 @@
 - Canonical validation now requires headed (`headless:false`) Chromium and a
   normal user-agent. No headed run was started; P1 acceptance is pending.
 
+## 2026-09-20 headed visual recovery audit
+
+- Root cause evidence: the first headed fixture capture lost the WebGPU device while using
+  `canvas.captureStream()` as the source; no canonical manifest was written.
+- Harness now uses owned `ImageBitmap`/`VideoFrame` snapshots with explicit close and queue drain;
+  follow-up diagnostics report no device loss and all 12 screenshot hashes validate.
+- Human/content-crop review still failed for halo/double-line/safe-fallback panels, so this is a
+  safe diagnostic fix only; canonical visual acceptance remains pending.
+
 Son güncelleme: 2026-09-20
 
 ## 2026-09-20 statik kapanış doğrulaması

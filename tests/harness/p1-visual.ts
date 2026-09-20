@@ -1,5 +1,10 @@
 import { Anime4kBackend } from "../../src/core/gpu/anime4k-backend";
-import type { PreparedFrame, QualityLevel, UpscalerBackend } from "../../src/core/contracts";
+import type {
+  PreparedFrame,
+  QualityLevel,
+  RenderSource,
+  UpscalerBackend,
+} from "../../src/core/contracts";
 import { WebGpuBackend } from "../../src/core/gpu/webgpu-backend";
 
 export type VisualFixture = "halo" | "double-line" | "color-bleed" | "temporal-shimmer";
@@ -39,6 +44,10 @@ declare global {
     __P1_VISUAL_RUN__?: (mode: VisualMode, fixture: VisualFixture) => Promise<CaptureResult>;
     __P1_VISUAL_CLEANUP__?: () => void;
     __P1_VISUAL_READY__?: Promise<void>;
+    __P1_VISUAL_DIAGNOSTICS__?: {
+      uncapturedErrors: string[];
+      deviceLost: { reason: string; message: string } | undefined;
+    };
   }
 }
 
@@ -52,13 +61,17 @@ const metricsLabel = required<HTMLElement>("metrics");
 const SEED = 0x51a7;
 const FRAME_INDEX = 17;
 
-let stream: MediaStream | undefined;
 let sourcePlaybackStarted = false;
 let backend: UpscalerBackend | undefined;
 let activeMode: VisualMode | undefined;
 let warmedMode: VisualMode | undefined;
 let gpuDevice: GPUDevice | undefined;
 let gpuContext: GPUCanvasContext | undefined;
+const diagnostics = {
+  uncapturedErrors: [] as string[],
+  deviceLost: undefined as { reason: string; message: string } | undefined,
+};
+window.__P1_VISUAL_DIAGNOSTICS__ = diagnostics;
 
 window.__P1_VISUAL_RUN__ = runCapture;
 window.__P1_VISUAL_CLEANUP__ = cleanup;
@@ -97,10 +110,11 @@ async function runCapture(mode: VisualMode, fixture: VisualFixture): Promise<Cap
   try {
     frame = await backend.prepare(sourceFrame);
   } finally {
-    sourceFrame.close();
+    closeSourceFrame(sourceFrame);
   }
   const stats = frame.stats;
   present(frame);
+  await gpuDevice?.queue.onSubmittedWorkDone();
   await nextPaint();
   const playbackAfter = readPlaybackState();
   const result: CaptureResult = {
@@ -127,6 +141,12 @@ async function createBackend(mode: VisualMode): Promise<UpscalerBackend> {
     const adapter = await navigator.gpu.requestAdapter({ powerPreference: "high-performance" });
     if (!adapter) throw new Error("WebGPU adaptörü bulunamadı");
     gpuDevice = await adapter.requestDevice();
+    gpuDevice.addEventListener("uncapturederror", (event) => {
+      diagnostics.uncapturedErrors.push(event.error.message);
+    });
+    void gpuDevice.lost.then((info) => {
+      diagnostics.deviceLost = { reason: info.reason, message: info.message };
+    });
     gpuContext = output.getContext("webgpu") as GPUCanvasContext | undefined;
     if (!gpuContext) throw new Error("WebGPU canvas context oluşturulamadı");
   }
@@ -152,8 +172,9 @@ async function startSource(): Promise<void> {
   const sourceContext = sourceCanvas.getContext("2d", { alpha: false });
   if (!sourceContext) throw new Error("2D fixture context oluşturulamadı");
   drawFixture(sourceContext, "halo", FRAME_INDEX, SEED);
-  stream = sourceCanvas.captureStream(30);
-  sourceVideo.srcObject = stream;
+  // Keep the video element as a playback-state sentinel; the deterministic
+  // fixture itself is consumed directly by WebGPU.
+  sourcePlaybackStarted = true;
 }
 
 async function ensureSourcePlaying(): Promise<void> {
@@ -170,12 +191,19 @@ async function ensureSourcePlaying(): Promise<void> {
   sourcePlaybackStarted = true;
 }
 
-async function createSourceFrame(mode: VisualMode): Promise<VideoFrame | ImageBitmap> {
+async function createSourceFrame(mode: VisualMode): Promise<RenderSource> {
+  // Use owned snapshots for deterministic fixtures. A canvas captureStream
+  // creates a Chromium external-image lifetime that can invalidate headed
+  // Vulkan WebGPU devices; production video ownership is not changed here.
   if (mode !== "safe-fallback") return createImageBitmap(sourceCanvas);
   if (typeof VideoFrame !== "function") {
     throw new Error("VideoFrame API görsel harness'te kullanılamıyor");
   }
   return new VideoFrame(sourceCanvas, { timestamp: Math.round(performance.now() * 1000) });
+}
+
+function closeSourceFrame(source: RenderSource): void {
+  if ("close" in source && typeof source.close === "function") source.close();
 }
 
 async function warmupBackend(mode: VisualMode): Promise<void> {
@@ -185,13 +213,14 @@ async function warmupBackend(mode: VisualMode): Promise<void> {
     const prepared = await backend.prepare(sourceFrame);
     try {
       prepared.present();
+      await gpuDevice?.queue.onSubmittedWorkDone();
       await nextPaint();
     } catch (error) {
       prepared.discard();
       throw error;
     }
   } finally {
-    sourceFrame.close();
+    closeSourceFrame(sourceFrame);
   }
 }
 
@@ -297,7 +326,7 @@ function samePlaybackState(before: PlaybackState, after: PlaybackState): boolean
 }
 
 function nextVideoFrame(): Promise<void> {
-  return new Promise((resolve) => sourceVideo.requestVideoFrameCallback(() => resolve()));
+  return nextPaint();
 }
 
 function nextPaint(): Promise<void> {
@@ -311,8 +340,6 @@ function cleanup(): void {
   backend = undefined;
   activeMode = undefined;
   warmedMode = undefined;
-  stream?.getTracks().forEach((track) => track.stop());
-  stream = undefined;
   sourcePlaybackStarted = false;
 }
 
