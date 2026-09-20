@@ -106,7 +106,10 @@ fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
 
 export const PRESENT_SHADER = /* wgsl */ `
 @group(0) @binding(0) var sourceTexture: texture_2d<f32>;
-@group(0) @binding(1) var sourceSampler: sampler;
+@group(0) @binding(1) var historyTexture: texture_2d<f32>;
+@group(0) @binding(2) var sourceSampler: sampler;
+struct TemporalParams { blend: f32, gate: f32, historyValid: f32, _padding: f32 }
+@group(0) @binding(3) var<uniform> temporal: TemporalParams;
 
 struct VertexOutput {
   @builtin(position) position: vec4f,
@@ -133,6 +136,13 @@ fn vertexMain(@builtin(vertex_index) index: u32) -> VertexOutput {
 
 @fragment
 fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
-  return textureSample(sourceTexture, sourceSampler, input.uv);
+  let current = textureSample(sourceTexture, sourceSampler, input.uv);
+  if (temporal.historyValid < 0.5) { return current; }
+  let previous = textureSample(historyTexture, sourceSampler, input.uv);
+  let currentLuma = dot(current.rgb, vec3f(0.2126, 0.7152, 0.0722));
+  let previousLuma = dot(previous.rgb, vec3f(0.2126, 0.7152, 0.0722));
+  let motion = smoothstep(temporal.gate, temporal.gate * 2.0, abs(currentLuma - previousLuma));
+  let weight = temporal.blend * (1.0 - motion);
+  return mix(current, previous, clamp(weight, 0.0, 0.18));
 }
 `;

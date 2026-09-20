@@ -50,5 +50,6 @@ export interface UpscalerBackend {
   resize(input: FrameSize, output: FrameSize): Promise<void>;
   setQualityLevel(level: QualityLevel): void;
   prepare(source: RenderSource): Promise<PreparedFrame>;
+  resetTemporal?(reason: string): void;
   dispose(): void;
 }

@@ -12,6 +12,8 @@ import type {
 
 const BUFFER_UNIFORM = 0x0040;
 const BUFFER_COPY_DST = 0x0008;
+const TEXTURE_COPY_SRC = 0x0001;
+const TEXTURE_COPY_DST = 0x0002;
 const TEXTURE_BINDING = 0x0004;
 const TEXTURE_RENDER_ATTACHMENT = 0x0010;
 
@@ -30,6 +32,8 @@ export interface WebGpuProfileParameters {
   /** Human-readable strategy used for diagnostics and settings tests. */
   readonly strategy: "bounded-luma" | "edge-aware" | "denoise-unsharp" | "text-safe";
 }
+
+export const TEMPORAL_STABILIZATION = Object.freeze({ blend: 0.12, gate: 0.045, maxBlend: 0.18 });
 
 export const WEBGPU_PROFILE_PARAMETERS: Readonly<
   Record<ProcessingProfile, WebGpuProfileParameters>
@@ -75,6 +79,8 @@ export class WebGpuBackend implements UpscalerBackend {
   private sampler: GPUSampler | undefined;
   private uniformBuffer: GPUBuffer | undefined;
   private processedTexture: GPUTexture | undefined;
+  private historyTexture: GPUTexture | undefined;
+  private temporalUniformBuffer: GPUBuffer | undefined;
   private presentBindGroup: GPUBindGroup | undefined;
   private inputSize: FrameSize = { width: 1, height: 1 };
   private outputSize: FrameSize = { width: 1, height: 1 };
@@ -89,6 +95,7 @@ export class WebGpuBackend implements UpscalerBackend {
   private nextFrameToken = 0;
   private activeFrameToken: number | undefined;
   private deviceLostListenerGeneration = 0;
+  private historyValid = false;
 
   async initialize(context: BackendContext): Promise<void> {
     if (this.initialized)
@@ -114,6 +121,11 @@ export class WebGpuBackend implements UpscalerBackend {
         size: 48,
         usage: BUFFER_UNIFORM | BUFFER_COPY_DST,
       });
+      this.temporalUniformBuffer = device.createBuffer({
+        label: "Temporal stabilization parameters",
+        size: 16,
+        usage: BUFFER_UNIFORM | BUFFER_COPY_DST,
+      });
       this.processPipeline = createPipeline(
         device,
         "Safe WebGPU process",
@@ -137,6 +149,8 @@ export class WebGpuBackend implements UpscalerBackend {
       device.lost.then((info) => {
         if (this.disposed || listenerGeneration !== this.deviceLostListenerGeneration) return;
         this.deviceLost = true;
+        this.historyValid = false;
+        this.writeTemporalParameters();
         this.activeFrameToken = undefined;
         this.onDeviceLost?.(info);
       });
@@ -161,6 +175,9 @@ export class WebGpuBackend implements UpscalerBackend {
     this.activeFrameToken = undefined;
     this.processedTexture?.destroy();
     this.processedTexture = undefined;
+    this.historyTexture?.destroy();
+    this.historyTexture = undefined;
+    this.historyValid = false;
     this.presentBindGroup = undefined;
     this.inputSize = { ...input };
     this.outputSize = { ...output };
@@ -168,23 +185,39 @@ export class WebGpuBackend implements UpscalerBackend {
       label: "Safe WebGPU prepared frame",
       size: [output.width, output.height],
       format: "rgba8unorm",
-      usage: TEXTURE_RENDER_ATTACHMENT | TEXTURE_BINDING,
+      usage: TEXTURE_RENDER_ATTACHMENT | TEXTURE_BINDING | TEXTURE_COPY_SRC,
+    });
+    this.historyTexture = device.createTexture({
+      label: "Temporal stabilization history",
+      size: [output.width, output.height],
+      format: "rgba8unorm",
+      usage: TEXTURE_BINDING | TEXTURE_COPY_DST,
     });
     this.presentBindGroup = device.createBindGroup({
       label: "Safe WebGPU present bindings",
       layout: this.requirePresentPipeline().getBindGroupLayout(0),
       entries: [
         { binding: 0, resource: this.processedTexture.createView() },
-        { binding: 1, resource: this.requireSampler() },
+        { binding: 1, resource: this.requireHistoryTexture().createView() },
+        { binding: 2, resource: this.requireSampler() },
+        { binding: 3, resource: this.requireTemporalUniformBuffer() },
       ],
     });
+    this.writeTemporalParameters();
     this.writeParameters();
   }
 
   setQualityLevel(level: QualityLevel): void {
     this.requireUsable();
     this.qualityLevel = level;
+    this.resetTemporal("quality-change");
     this.writeParameters();
+  }
+
+  resetTemporal(reason?: string): void {
+    void reason;
+    this.historyValid = false;
+    this.writeTemporalParameters();
   }
 
   async prepare(source: RenderSource): Promise<PreparedFrame> {
@@ -265,6 +298,11 @@ export class WebGpuBackend implements UpscalerBackend {
     this.activeFrameToken = undefined;
     this.processedTexture?.destroy();
     this.processedTexture = undefined;
+    this.historyTexture?.destroy();
+    this.historyTexture = undefined;
+    this.temporalUniformBuffer?.destroy();
+    this.temporalUniformBuffer = undefined;
+    this.historyValid = false;
     this.presentBindGroup = undefined;
     this.uniformBuffer?.destroy();
     this.uniformBuffer = undefined;
@@ -308,7 +346,14 @@ export class WebGpuBackend implements UpscalerBackend {
           this.requirePresentPipeline(),
           this.requirePresentBindGroup(),
         );
+        encoder.copyTextureToTexture(
+          { texture: this.requireProcessedTexture() },
+          { texture: this.requireHistoryTexture() },
+          [this.outputSize.width, this.outputSize.height, 1],
+        );
         this.requireDevice().queue.submit([encoder.finish()]);
+        this.historyValid = true;
+        this.writeTemporalParameters();
       },
       discard: consume,
     };
@@ -329,6 +374,20 @@ export class WebGpuBackend implements UpscalerBackend {
     uints[6] = PROFILE_IDS[this.profile];
     uints[7] = QUALITY_IDS[this.qualityLevel];
     this.device.queue.writeBuffer(this.uniformBuffer, 0, buffer);
+  }
+
+  private writeTemporalParameters(): void {
+    if (!this.device || !this.temporalUniformBuffer) return;
+    this.device.queue.writeBuffer(
+      this.temporalUniformBuffer,
+      0,
+      new Float32Array([
+        TEMPORAL_STABILIZATION.blend,
+        TEMPORAL_STABILIZATION.gate,
+        this.historyValid ? 1 : 0,
+        0,
+      ]),
+    );
   }
 
   private gpuFailure(message: string, cause: unknown): WebGpuBackendError {
@@ -378,6 +437,16 @@ export class WebGpuBackend implements UpscalerBackend {
     if (!this.processedTexture)
       throw new WebGpuBackendError("not-initialized", "GPU output texture hazır değil.");
     return this.processedTexture;
+  }
+  private requireHistoryTexture(): GPUTexture {
+    if (!this.historyTexture)
+      throw new WebGpuBackendError("not-initialized", "Temporal history hazır değil.");
+    return this.historyTexture;
+  }
+  private requireTemporalUniformBuffer(): GPUBuffer {
+    if (!this.temporalUniformBuffer)
+      throw new WebGpuBackendError("not-initialized", "Temporal parametreleri hazır değil.");
+    return this.temporalUniformBuffer;
   }
   private requirePresentBindGroup(): GPUBindGroup {
     if (!this.presentBindGroup)

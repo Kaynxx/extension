@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { getWebGpuProfileParameters, WebGpuBackend } from "../../src/core/gpu/webgpu-backend";
+import {
+  getWebGpuProfileParameters,
+  TEMPORAL_STABILIZATION,
+  WebGpuBackend,
+} from "../../src/core/gpu/webgpu-backend";
 import type { WebGpuBackendError } from "../../src/core/gpu/webgpu-backend";
 
 describe("WebGpuBackend canonical safe fallback", () => {
@@ -9,6 +13,11 @@ describe("WebGpuBackend canonical safe fallback", () => {
     expect(getWebGpuProfileParameters("screen-3d").strength).toBeLessThan(
       getWebGpuProfileParameters("live-action").strength,
     );
+  });
+  it("bounds temporal blend and gate to conservative values", () => {
+    expect(TEMPORAL_STABILIZATION.blend).toBeGreaterThan(0);
+    expect(TEMPORAL_STABILIZATION.blend).toBeLessThanOrEqual(TEMPORAL_STABILIZATION.maxBlend);
+    expect(TEMPORAL_STABILIZATION.gate).toBeGreaterThan(0);
   });
   it("prepares an offscreen frame and presents it only through the prepared handle", async () => {
     const gpu = createFakeGpu();
@@ -36,6 +45,7 @@ describe("WebGpuBackend canonical safe fallback", () => {
     expect(gpu.presentPasses()).toBe(0);
     frame.present();
     expect(gpu.presentPasses()).toBe(1);
+    backend.resetTemporal?.("scene-cut");
     expect(() => frame.discard()).toThrowError(
       expect.objectContaining<Partial<WebGpuBackendError>>({ code: "frame-consumed" }),
     );
@@ -123,6 +133,7 @@ function createFakeGpu(): {
         },
         end: () => undefined,
       }),
+      copyTextureToTexture: () => undefined,
       finish: () => ({}),
     } as unknown as GPUCommandEncoder;
   };

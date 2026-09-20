@@ -9,9 +9,8 @@ export interface TemporalResetEvent {
 }
 
 /**
- * Safe reset-only temporal boundary. It deliberately stores no frame history;
- * a future temporal model can subscribe without pretending that stabilization
- * already exists in the MVP.
+ * Safe temporal boundary. GPU history is owned by the backend and is cleared
+ * whenever this boundary observes a discontinuity.
  */
 export class TemporalStateBoundary {
   private lastMediaTime: number | undefined;

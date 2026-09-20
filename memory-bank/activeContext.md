@@ -120,6 +120,17 @@ Son güncelleme: 2026-09-20
 
 ## 2026-09-20 P4 conservative auto/reset plumbing
 
+### Temporal stabilization post-pass
+
+- WebGPU present path now keeps one previous enhanced texture and applies a
+  bounded 0.12 history blend only when same-pixel luma difference is below the
+  0.045 motion gate; fast motion stays on the current frame.
+- History clears on seek, scene-cut, resize, source/quality/profile changes,
+  device loss and stop/restart. Latest-frame-wins and single-flight scheduling
+  remain unchanged; this is a non-generative shader pass, not NanoVSR/neural SR.
+- Unit/build checks pass (79 tests). Headed 30/60 FPS shimmer/ghosting fixture
+  and canonical evidence promotion remain pending; no performance claim made.
+
 - `src/core/profiles/auto-profile.ts` bounded spatial feature + metadata heuristic,
   confidence threshold and three-sample hysteresis provides anime/live-action/
   screen-3d routing; incomplete/ambiguous evidence remains `safe`.

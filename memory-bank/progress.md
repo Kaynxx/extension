@@ -122,6 +122,16 @@ main-thread p50/p95/p99 özetlerini de taşıyor; bu alanlar her koşu için raw
 
 ## 2026-09-20 P4 otomatik profil ve temporal sınırlar
 
+### Temporal stabilization implementation
+
+- Added previous-enhanced-texture history with bounded luma motion gate and
+  conservative blend in the canonical WebGPU present pass.
+- Reset integration covers scheduler discontinuities, controller profile/quality
+  boundaries, resize, device loss and backend disposal.
+- `npm run check`: 16 files, 79 tests, all builds passed. Headed physical-RTX
+  temporal fixture comparison is still pending, so no canonical improvement
+  result is claimed.
+
 - Otomatik seçim yalnız sınırlı yerel spatial özet + metadata alır; güven eşiği
   ve üç örnek hysteresis ile güçlü kanıt yoksa `safe` kalır.
 - Manual `anime`, `live-action`, `screen-3d` ve `safe` seçimleri selector'a

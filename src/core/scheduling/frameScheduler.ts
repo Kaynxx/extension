@@ -35,7 +35,7 @@ export interface FrameSchedulerOptions<TSource extends VideoFrameCallbackSource>
   readonly onQualityDecision?: (decision: AdaptiveQualityDecision) => void;
   readonly onPresented?: () => void;
   readonly onError?: (error: unknown) => void;
-  /** Reset-only hook for a future temporal model; no temporal inference is performed here. */
+  /** Clears temporal history on discontinuities before the next frame. */
   readonly onTemporalReset?: (reason: TemporalResetReason) => void;
 }
 

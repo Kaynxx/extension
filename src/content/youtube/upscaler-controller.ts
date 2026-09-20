@@ -161,8 +161,8 @@ export class UpscalerController {
           void this.backendFailure(asError(error, "GPU karesi işlenemedi."));
         }
       },
-      onTemporalReset: () => {
-        // Reset plumbing only: no temporal model is claimed by this MVP.
+      onTemporalReset: (reason) => {
+        backend.resetTemporal?.(reason);
       },
     });
     this.scheduler = scheduler;
