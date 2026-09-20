@@ -114,6 +114,25 @@ test("tracks a replacement video during YouTube-style SPA navigation", async () 
   await expect(firstCanvas).toHaveCSS("opacity", "1", { timeout: 20_000 });
   await expect(firstCanvas).toHaveCSS("clip-path", "inset(0px 45% 0px 0px)");
 
+  await setSettings({
+    enabled: true,
+    profile: "anime",
+    quality: "low",
+    target: "2x",
+    comparison: 0,
+    showHud: false,
+  });
+  await expect(firstCanvas).toHaveCSS("clip-path", "inset(0px 100% 0px 0px)");
+  await setSettings({
+    enabled: true,
+    profile: "anime",
+    quality: "low",
+    target: "2x",
+    comparison: 100,
+    showHud: false,
+  });
+  await expect(firstCanvas).toHaveCSS("clip-path", "inset(0px 0% 0px 0px)");
+
   await page.evaluate(async () => {
     const oldVideo = document.querySelector("video");
     oldVideo?.remove();
@@ -211,6 +230,57 @@ test("reacts to a same-element source resolution change without duplicating the 
   await page.close();
 });
 
+test("preserves user playback, captions, fullscreen, and control state", async () => {
+  await setSettings({
+    enabled: true,
+    profile: "anime",
+    quality: "low",
+    target: "2x",
+    comparison: 50,
+    showHud: false,
+  });
+  const page = await createYouTubeFixture();
+  const video = page.locator("video");
+  const canvas = page.locator('canvas[data-webgpu-upscaler="canvas"]');
+  await expect(canvas).toHaveCSS("opacity", "1", { timeout: 20_000 });
+
+  await page.evaluate(() => {
+    const element = document.querySelector("video");
+    if (!element) throw new Error("Fixture video missing");
+    element.pause();
+    element.currentTime = 0;
+    element.playbackRate = 0.75;
+    element.volume = 0.37;
+    element.muted = false;
+    document.dispatchEvent(new Event("fullscreenchange"));
+  });
+
+  const userState = await video.evaluate((element: HTMLVideoElement) => ({
+    currentTime: element.currentTime,
+    paused: element.paused,
+    muted: element.muted,
+    volume: element.volume,
+    playbackRate: element.playbackRate,
+    textTracks: element.textTracks.length,
+    controls: document.querySelectorAll(".ytp-chrome-bottom [role='button']").length,
+  }));
+  await page.waitForTimeout(250);
+  const after = await video.evaluate((element: HTMLVideoElement) => ({
+    currentTime: element.currentTime,
+    paused: element.paused,
+    muted: element.muted,
+    volume: element.volume,
+    playbackRate: element.playbackRate,
+    textTracks: element.textTracks.length,
+    controls: document.querySelectorAll(".ytp-chrome-bottom [role='button']").length,
+  }));
+
+  expect(after).toEqual(userState);
+  await expect(canvas).toHaveCSS("pointer-events", "none");
+  await expect(page.locator(".ytp-chrome-bottom [role='button']")).toHaveCount(1);
+  await page.close();
+});
+
 async function setSettings(settings: Record<string, unknown>): Promise<void> {
   const popup = await context.newPage();
   await popup.goto(`chrome-extension://${extensionId}/popup.html`);
@@ -255,7 +325,9 @@ const FIXTURE_HTML = `<!doctype html>
   <body>
     <div class="html5-video-container">
       <video autoplay muted loop></video>
+      <track kind="captions" label="English" srclang="en" default>
     </div>
+    <div class="ytp-chrome-bottom"><div class="ytp-play-button" role="button"></div></div>
     <canvas id="source" width="640" height="360"></canvas>
     <script>
       const source = document.querySelector('#source');

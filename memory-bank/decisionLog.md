@@ -240,3 +240,14 @@
   Kare geçmişi veya sahte temporal stabilizasyon eklenmez.
 - Gerekçe: P4 güvenlik hedeflerini karşılayıp normal GPU yolunda CPU readback,
   temporal leakage ve uydurma model iddiasını önlemek.
+
+## D-029 — Görsel arşiv promotion'ı yalnız mekanik ve provenance'lıdır
+
+- Tarih: 2026-09-20
+- Durum: Accepted — native/human visual review açık
+- Karar: Mevcut 12-capture headless arşivi, her PNG'nin hash/byte doğrulaması ve taze fiziksel
+  GPU + `HeadlessChrome` probe'u sonrasında canonical visual manifest yoluna promote edilebilir.
+  Promotion scripti yeni capture üretmez; `manifestKind=headless-mechanical-archive`, kaynak arşiv,
+  eski console uyarısı ve `humanReviewRequired`/`nativeYouTubeReviewRequired` alanlarını korur.
+- Gerekçe: Kullanıcının headless-only politikasını bozmadan validator'ın user-agent/provenance
+  gereksinimini karşılamak ve tanı arşivini yeni görsel koşu gibi sunmamak.

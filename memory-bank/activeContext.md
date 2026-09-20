@@ -8,7 +8,19 @@ Son güncelleme: 2026-09-20
 - `npm run check` geçti: typecheck, lint, format, 15 test dosyası/76 test ve üç build hedefi.
 - `npm audit --omit=dev` bilinen güvenlik açığı bildirmedi.
 - `npm run package:release` deterministik `artifacts/webgpu-video-upscaler-0.1.0.zip` ve SHA256 üretiyor; arşiv yalnız dist ve lisans/gizlilik dosyalarını içeriyor, source map/evidence/local path içermiyor.
-- Native YouTube DRM/CORS ve insan görsel değerlendirmesi; canonical visual manifest; P2/P3 gerçek model/OCR/60 FPS; P4 temporal model açık kabul kapılarıdır. Başlıklı/görünür test çalıştırılmadı.
+- Native YouTube DRM/CORS ve insan görsel değerlendirmesi; yalnız mekanik görsel arşiv (subjektif kabul değil); P2/P3 gerçek model/OCR/60 FPS; P4 temporal model açık kabul kapılarıdır. Başlıklı/görünür test çalıştırılmadı.
+
+## 2026-09-20 headless görsel manifest promotion
+
+- `scripts/promote-p1-visual-archive.mjs` yalnızca mevcut 12-capture headless arşivinin PNG/hash
+  bütünlüğünü doğrulayıp, yeni headless `HeadlessChrome` user-agent ve fiziksel GPU probe'u ile
+  `docs/testing/evidence/p1/visual/visual-results.json` yoluna promote eder; yeniden görsel koşu
+  veya insan kalite kararı iddia etmez.
+- Promotion sonucu `node scripts/acceptance-validation.mjs --validate-manifest ...` geçti.
+  Manifest `manifestKind=headless-mechanical-archive`, eski console uyarısı ve native/human
+  review açık kapılarını taşır.
+- Tam visual runner'ın GPU kaynak yaşam döngüsü beklemesi çözülmedi; goal native YouTube/CORS/DRM
+  ve insan subjektif inceleme kanıtları gelmeden tamamlandı sayılmayacak.
 
 ## 2026-09-20 P2/P3 profil yolu
 
@@ -35,11 +47,12 @@ Son güncelleme: 2026-09-20
 
 ## Son doğrulama
 
-- Headless RTX 5070 benchmarkı: 1920×1080→3840×2160 direct 2×, 24/30 FPS low/high, 4×120 kare; güncel p95 en çok 10.20 ms, missed/skipped/stale/failed/bypass/GPU hata 0.
+- Headless RTX 5070 benchmarkı: 1920×1080→3840×2160 direct 2×, 24/30 FPS low/high, 4×120 kare; güncel p95 en çok 10.30 ms (24/high), main-thread submit p50/p95/p99 alanları da canonical JSON'a eklendi; missed/skipped/stale/failed/bypass/GPU hata 0.
 - Headless adaptive stress: high→low, 120 settled-low örneği, 5 saniye hysteresis sonrası low→high; maxConcurrentPrepares=1, failed=0, bypass=0.
 - Görsel harness: 4 risk fixture × 3 mod; mekanik pass map, playback değişmezliği, temporal çift ve non-black çıktı kapıları mevcut.
 - `tests/integration/extension.spec.ts` başlatması headless persistent Chromium kullanır; native YouTube/DRM/CORS ve insan subjektif kalite kararı bu masaüstü politikasında açık risk olarak kalır.
 - Son headless doğrulama: `npm run check` (76 unit test + üç build), headless extension integration (3/3) ve adaptive/benchmark runner'ları geçti. Tam visual runner GPU kaynak yaşam döngüsü nedeniyle tamamlanmadı; 12 capture'lık headless arşiv manifesti korunuyor.
+- Son headless extension integration artık 4/4: playback state + SPA replacement + same-element resize yanında pause/seek/rate/volume, captions, fullscreen sinyali ve controls DOM korunumu da fixture seviyesinde doğrulanıyor. Native YouTube DRM/CORS hâlâ açık.
 
 ## Sonraki somut adım
 
