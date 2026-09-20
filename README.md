@@ -20,7 +20,7 @@ Kod ve headless fixture kanıtları; MV3 build'i, YouTube overlay/scheduler'ı, 
 ## Açık yayın kabulü
 
 - Native YouTube'da DRM/CORS, altyazı/kontrol/tam ekran/seek ve gerçek kullanıcı gözlemli görsel kalite kararı henüz doğrulanmadı.
-- P1 visual PNG'leri mekanik fixture kanıtıdır; insan incelemesinin yerine geçmez ve canonical visual manifest henüz yoktur.
+- P1 visual PNG'leri mekanik fixture kanıtıdır; mechanical canonical manifest mevcut olsa da insan incelemesinin veya subjektif kalite kabulünün yerine geçmez.
 - P2/P3 gerçek WebSR/RT4KSR karşılaştırması, OCR/halo kabulü ve ayrı 60 FPS benchmarkı açık kalır.
 - P4 temporal stabilizasyon modeli uygulanmadı; mevcut sınır yalnız reset ve stale-frame güvenliğidir.
 
