@@ -309,7 +309,7 @@ export class Anime4kBackend implements UpscalerBackend {
     height: number;
     pixels: Uint8Array;
   }> {
-    return this.debugReadbackTexture(this.requireSourceTexture(), "source");
+    return this.debugReadbackTexture(this.requireSourceTexture(), this.inputSize, "source");
   }
 
   async debugReadbackFinalTexture(): Promise<{
@@ -317,7 +317,7 @@ export class Anime4kBackend implements UpscalerBackend {
     height: number;
     pixels: Uint8Array;
   }> {
-    return this.debugReadbackTexture(this.requireFinalTexture(), "spatial-final");
+    return this.debugReadbackTexture(this.requireFinalTexture(), this.outputSize, "spatial-final");
   }
 
   async debugReadbackTemporalOutput(): Promise<{
@@ -325,11 +325,16 @@ export class Anime4kBackend implements UpscalerBackend {
     height: number;
     pixels: Uint8Array;
   }> {
-    return this.debugReadbackTexture(this.requireTemporalOutputTexture(), "temporal-output");
+    return this.debugReadbackTexture(
+      this.requireTemporalOutputTexture(),
+      this.outputSize,
+      "temporal-output",
+    );
   }
 
   private async debugReadbackTexture(
     texture: GPUTexture,
+    size: { width: number; height: number },
     label: string,
   ): Promise<{
     width: number;
@@ -338,32 +343,32 @@ export class Anime4kBackend implements UpscalerBackend {
   }> {
     this.requireUsable();
     const device = this.requireDevice();
-    const bytesPerRow = Math.ceil((this.outputSize.width * 4) / 256) * 256;
+    const bytesPerRow = Math.ceil((size.width * 4) / 256) * 256;
     const buffer = device.createBuffer({
       label: `P4 debug ${label} readback`,
-      size: bytesPerRow * this.outputSize.height,
+      size: bytesPerRow * size.height,
       usage: BUFFER_USAGE_COPY_DST | BUFFER_USAGE_MAP_READ,
     });
     try {
       const encoder = device.createCommandEncoder({ label: "P4 debug texture readback" });
-      encoder.copyTextureToBuffer(
-        { texture },
-        { buffer, bytesPerRow, rowsPerImage: this.outputSize.height },
-        [this.outputSize.width, this.outputSize.height, 1],
-      );
+      encoder.copyTextureToBuffer({ texture }, { buffer, bytesPerRow, rowsPerImage: size.height }, [
+        size.width,
+        size.height,
+        1,
+      ]);
       device.queue.submit([encoder.finish()]);
       await device.queue.onSubmittedWorkDone();
       await buffer.mapAsync(0x0001);
       const mapped = new Uint8Array(buffer.getMappedRange());
-      const pixels = new Uint8Array(this.outputSize.width * this.outputSize.height * 4);
-      for (let row = 0; row < this.outputSize.height; row += 1) {
+      const pixels = new Uint8Array(size.width * size.height * 4);
+      for (let row = 0; row < size.height; row += 1) {
         pixels.set(
-          mapped.subarray(row * bytesPerRow, row * bytesPerRow + this.outputSize.width * 4),
-          row * this.outputSize.width * 4,
+          mapped.subarray(row * bytesPerRow, row * bytesPerRow + size.width * 4),
+          row * size.width * 4,
         );
       }
       buffer.unmap();
-      return { width: this.outputSize.width, height: this.outputSize.height, pixels };
+      return { width: size.width, height: size.height, pixels };
     } finally {
       buffer.destroy();
     }
