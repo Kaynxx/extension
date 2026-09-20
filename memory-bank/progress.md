@@ -100,6 +100,14 @@ main-thread p50/p95/p99 özetlerini de taşıyor; bu alanlar her koşu için raw
 
 ## 2026-09-20 P5 manga static MVP
 
+### Headed acceptance diagnostic
+
+- Evidence: `docs/testing/evidence/p5-manga/` (`headless:false`, RTX 5070 hardware
+  gate, source/enhanced/comparison captures and JSON report).
+- 24-tile/64px-overlap geometry and all safety/exclusion/rollback checks passed.
+- Enhanced output was transparent in the headed canvas readback; therefore halo,
+  seam and glyph acceptance is pending and the evidence is not canonical.
+
 - `MangaImagePipeline` lazy IntersectionObserver ve MutationObserver ile yalnızca
   açık opt-in sonrasında uygun statik görselleri işler.
 - Büyük görseller overlap tile'lara ayrılır; canvas baseline metin/çizgi sadakatini

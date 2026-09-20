@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      body {
+        margin: 0;
+        background: #18202a;
+        color: white;
+        font: 16px sans-serif;
+      }
+      .stage {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .panel {
+        background: #fff;
+        aspect-ratio: 5/3;
+        overflow: hidden;
+      }
+      .panel img,
+      .panel canvas {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
+      }
+      #offscreen {
+        position: absolute;
+        left: -10000px;
+        top: -10000px;
+      }
+      #animated {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage">
+      <div class="panel"><img id="source" alt="manga source" /></div>
+      <div class="panel"><canvas id="enhanced"></canvas></div>
+    </div>
+    <img id="offscreen" alt="webtoon offscreen" /><img
+      id="animated"
+      alt="animated fixture"
+    /><canvas id="canvas-host"><img id="canvas-image" alt="canvas fallback" /></canvas
+    ><video id="video-host"><img id="video-image" alt="video fallback" /></video>
+    <script type="module" src="./p5-manga.ts"></script>
+  </body>
+</html>

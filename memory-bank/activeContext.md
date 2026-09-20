@@ -96,6 +96,16 @@ Son güncelleme: 2026-09-20
 
 ## 2026-09-20 P5 manga static MVP
 
+### Headed acceptance diagnostic
+
+- Normal headed Chromium + physical RTX 5070/Vulkan/WebGPU gate passed; deterministic
+  5000×3000 manga fixture rendered with 24 tiles and 64px overlap.
+- Lazy/offscreen defer, animated/canvas/video exclusion, duplicate suppression,
+  source immutability and restore all passed.
+- Source capture is valid, but the enhanced canvas readback is fully transparent
+  (`enhancedNonBlackRatio=0`); no canonical P5 promotion. Evidence remains diagnostic
+  pending a separate canvas source/draw investigation.
+
 - `mangaEnabled` ayarı ve popup opt-in anahtarı eklendi; varsayılan kapalı.
 - Video hattından bağımsız `MangaImagePipeline`, lazy IntersectionObserver,
   conservative uygunluk filtresi, overlap tile üretimi ve canvas overlay
