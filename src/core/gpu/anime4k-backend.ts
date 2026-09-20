@@ -299,18 +299,44 @@ export class Anime4kBackend implements UpscalerBackend {
     this.writeTemporalParameters();
   }
 
-  /** Harness-only GPU readback; production paths never call this debug hook. */
+  /** Harness-only stage readbacks; production paths never call these debug hooks. */
+  async debugReadbackSourceTexture(): Promise<{
+    width: number;
+    height: number;
+    pixels: Uint8Array;
+  }> {
+    return this.debugReadbackTexture(this.requireSourceTexture(), "source");
+  }
+
   async debugReadbackFinalTexture(): Promise<{
+    width: number;
+    height: number;
+    pixels: Uint8Array;
+  }> {
+    return this.debugReadbackTexture(this.requireFinalTexture(), "spatial-final");
+  }
+
+  async debugReadbackTemporalOutput(): Promise<{
+    width: number;
+    height: number;
+    pixels: Uint8Array;
+  }> {
+    return this.debugReadbackTexture(this.requireTemporalOutputTexture(), "temporal-output");
+  }
+
+  private async debugReadbackTexture(
+    texture: GPUTexture,
+    label: string,
+  ): Promise<{
     width: number;
     height: number;
     pixels: Uint8Array;
   }> {
     this.requireUsable();
     const device = this.requireDevice();
-    const texture = this.requireTemporalOutputTexture();
     const bytesPerRow = Math.ceil((this.outputSize.width * 4) / 256) * 256;
     const buffer = device.createBuffer({
-      label: "P4 debug final texture readback",
+      label: `P4 debug ${label} readback`,
       size: bytesPerRow * this.outputSize.height,
       usage: BUFFER_USAGE_COPY_DST | BUFFER_USAGE_MAP_READ,
     });
@@ -658,6 +684,12 @@ export class Anime4kBackend implements UpscalerBackend {
       throw new Anime4kBackendError("not-initialized", "Final texture görünümü hazır değil.");
     }
     return this.finalView;
+  }
+
+  private requireFinalTexture(): GPUTexture {
+    if (!this.finalTexture)
+      throw new Anime4kBackendError("not-initialized", "Final texture hazır değil.");
+    return this.finalTexture;
   }
 
   private requireSourceBindGroup(): GPUBindGroup {

@@ -36,21 +36,36 @@ const frames: Record<string, { hash: string; cpuSubmitMs: number; meanLuma: numb
   backend.resetTemporal("manual");
   backend.setTemporalEnabled(run.temporal);
   const key = `${run.temporal ? "on" : "off"}-${run.fps}-${run.scenario}`;
-  const samples: { hash: string; cpuSubmitMs: number; meanLuma: number }[] = [];
+  const samples: {
+    hash: string;
+    cpuSubmitMs: number;
+    meanLuma: number;
+    cpuHash: string;
+    sourceHash: string;
+    finalHash: string;
+    bitmapSize: { width: number; height: number };
+  }[] = [];
   const count = run.fps === 60 ? 12 : 8;
   for (let i = 0; i < count; i += 1) {
     draw(run.scenario, i);
     await new Promise(requestAnimationFrame);
+    const cpuPixels = ctx.getImageData(0, 0, source.width, source.height).data;
     const frame: RenderSource = await createImageBitmap(source);
     let prepared: PreparedFrame | undefined;
     try {
       prepared = await backend.prepare(frame);
-      const readback = await backend.debugReadbackFinalTexture();
+      const sourceReadback = await backend.debugReadbackSourceTexture();
+      const finalReadback = await backend.debugReadbackFinalTexture();
       prepared.present();
       await device.queue.onSubmittedWorkDone();
+      const temporalReadback = await backend.debugReadbackTemporalOutput();
       samples.push({
-        hash: hashPixels(readback.pixels),
-        meanLuma: meanLuma(readback.pixels),
+        hash: hashPixels(temporalReadback.pixels),
+        meanLuma: meanLuma(temporalReadback.pixels),
+        sourceHash: hashPixels(sourceReadback.pixels),
+        finalHash: hashPixels(finalReadback.pixels),
+        bitmapSize: { width: frame.width, height: frame.height },
+        cpuHash: hashPixels(cpuPixels),
         cpuSubmitMs: prepared.stats.cpuSubmitMs,
       });
     } finally {
@@ -73,23 +88,51 @@ const frames: Record<string, { hash: string; cpuSubmitMs: number; meanLuma: numb
 (window as Window & { __P4_COLOR_CHECK__?: () => Promise<unknown> }).__P4_COLOR_CHECK__ =
   async () => {
     backend.setTemporalEnabled(false);
-    const hashes: string[] = [];
-    for (const color of ["#e83d52", "#1d66e5"]) {
-      ctx.fillStyle = color;
-      ctx.fillRect(0, 0, source.width, source.height);
+    const stages: {
+      color: string;
+      cpuHash: string;
+      bitmapSize: { width: number; height: number };
+      sourceHash: string;
+      finalHash: string;
+      temporalHash: string;
+      sourceLuma: number;
+      finalLuma: number;
+      temporalLuma: number;
+    }[] = [];
+    for (const [index, color] of ["#e83d52", "#1d66e5"].entries()) {
+      draw("scene-cut", index === 0 ? 0 : 4);
       await new Promise(requestAnimationFrame);
+      const cpuPixels = ctx.getImageData(0, 0, source.width, source.height).data;
       const frame = await createImageBitmap(source);
       let prepared: PreparedFrame | undefined;
       try {
         prepared = await backend.prepare(frame);
+        const sourceReadback = await backend.debugReadbackSourceTexture();
+        const finalReadback = await backend.debugReadbackFinalTexture();
         prepared.present();
         await device.queue.onSubmittedWorkDone();
-        hashes.push(hashPixels((await backend.debugReadbackFinalTexture()).pixels));
+        const temporalReadback = await backend.debugReadbackTemporalOutput();
+        stages.push({
+          color,
+          cpuHash: hashPixels(cpuPixels),
+          bitmapSize: { width: frame.width, height: frame.height },
+          sourceHash: hashPixels(sourceReadback.pixels),
+          finalHash: hashPixels(finalReadback.pixels),
+          temporalHash: hashPixels(temporalReadback.pixels),
+          sourceLuma: meanLuma(sourceReadback.pixels),
+          finalLuma: meanLuma(finalReadback.pixels),
+          temporalLuma: meanLuma(temporalReadback.pixels),
+        });
       } finally {
         frame.close();
       }
     }
-    return { first: hashes[0] ?? "", second: hashes[1] ?? "", changed: hashes[0] !== hashes[1] };
+    return {
+      stages,
+      first: stages[0]?.temporalHash ?? "",
+      second: stages[1]?.temporalHash ?? "",
+      changed: stages[0]?.temporalHash !== stages[1]?.temporalHash,
+    };
   };
 (window as Window & { __P4_RUN__?: unknown; __P4_STOP__?: () => void }).__P4_STOP__ = () => {
   backend.dispose();
@@ -108,13 +151,14 @@ function draw(s: Scenario, i: number): void {
     ctx.stroke();
   }
 }
-function hashPixels(pixels: Uint8Array): string {
+function hashPixels(pixels: ArrayLike<number>): string {
   let h = 2166136261;
-  for (const value of pixels) h = Math.imul(h ^ value, 16777619);
+  for (let index = 0; index < pixels.length; index += 1)
+    h = Math.imul(h ^ (pixels[index] ?? 0), 16777619);
   return (h >>> 0).toString(16);
 }
 
-function meanLuma(pixels: Uint8Array): number {
+function meanLuma(pixels: ArrayLike<number>): number {
   let total = 0;
   for (let i = 0; i < pixels.length; i += 4) {
     total +=
