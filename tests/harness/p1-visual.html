@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:," />
+    <title>P1 Anime görsel kanıt harness'i</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: system-ui, sans-serif;
+        background: #071019;
+        color: #eaf7ff;
+      }
+      body {
+        margin: 0;
+        padding: 24px;
+      }
+      main {
+        max-width: 1180px;
+        margin: auto;
+        display: grid;
+        gap: 16px;
+      }
+      .stage {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .panel {
+        position: relative;
+        min-width: 0;
+        background: #020507;
+        border: 1px solid #294553;
+      }
+      .panel h2 {
+        position: absolute;
+        z-index: 2;
+        margin: 8px;
+        padding: 4px 8px;
+        background: #071019cc;
+        font-size: 14px;
+      }
+      video,
+      #output {
+        display: block;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        object-fit: contain;
+      }
+      #source-canvas {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        left: -10000px;
+        top: -10000px;
+        opacity: 0;
+      }
+      pre {
+        min-height: 7em;
+        margin: 0;
+        padding: 12px;
+        overflow: auto;
+        background: #10202b;
+      }
+      .meta {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      code {
+        color: #77e0f2;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>P1 Anime görsel kanıt harness'i</h1>
+        <p>
+          Deterministik yerel desenler; PNG ve nesnel ölçüm çıktısı üretir. Görsel kalite kararı
+          insan incelemesine aittir.
+        </p>
+      </header>
+      <section class="meta">
+        <span>Fixture: <code id="fixture">hazır</code></span>
+        <span>Mod: <code id="mode">hazır</code></span>
+        <span>Durum: <code id="status">hazır</code></span>
+      </section>
+      <section class="stage">
+        <div class="panel">
+          <h2>Orijinal</h2>
+          <video id="source-video" muted playsinline></video>
+        </div>
+        <div class="panel">
+          <h2>İyileştirilmiş / safe fallback</h2>
+          <canvas id="output" width="3840" height="2160"></canvas>
+        </div>
+      </section>
+      <pre id="metrics" aria-live="polite">Henüz capture yok.</pre>
+      <canvas id="source-canvas" width="1920" height="1080"></canvas>
+    </main>
+    <script type="module" src="./p1-visual.ts"></script>
+  </body>
+</html>

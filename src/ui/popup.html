@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebGPU Video Upscaler</title>
+  </head>
+  <body>
+    <main class="panel">
+      <header class="header">
+        <div>
+          <p class="eyebrow">LOCAL WEBGPU</p>
+          <h1>Video Upscaler</h1>
+        </div>
+        <label class="switch" aria-label="İyileştirmeyi aç veya kapat">
+          <input id="enabled" type="checkbox" />
+          <span aria-hidden="true"></span>
+        </label>
+      </header>
+
+      <div class="status" role="status">
+        <span id="status-dot" class="status-dot" aria-hidden="true"></span>
+        <span id="status-text">Ayarlar yükleniyor</span>
+      </div>
+
+      <label class="checkbox-field">
+        <input id="manga-enabled" type="checkbox" />
+        Manga / webtoon görsellerini iyileştir (deneysel)
+      </label>
+
+      <label>
+        Profil
+        <select id="profile">
+          <option value="anime">Anime</option>
+          <option value="safe">Güvenli / sadakat</option>
+          <option value="auto">Otomatik profil (temkinli)</option>
+          <option value="live-action">Gerçek çekim — denoise</option>
+          <option value="screen-3d">Ekran / oyun / 3D — yazı güvenli</option>
+        </select>
+      </label>
+
+      <label>
+        Performans seviyesi
+        <select id="quality">
+          <option value="auto">Otomatik</option>
+          <option value="high">Yüksek — 2 geçiş</option>
+          <option value="low">Düşük — 1 geçiş</option>
+        </select>
+      </label>
+
+      <label>
+        Hedef
+        <select id="target">
+          <option value="2x">Doğrudan 2×</option>
+          <option value="3x">Doğrudan 3×</option>
+          <option value="4k">4K'ya sığdır</option>
+          <option value="display">Ekrana sığdır</option>
+        </select>
+      </label>
+
+      <label class="range-field">
+        <span>
+          <span>Orijinal / iyileştirilmiş</span>
+          <output id="compare-value" for="comparison">%100</output>
+        </span>
+        <input
+          id="comparison"
+          type="range"
+          min="0"
+          max="100"
+          step="1"
+          value="100"
+          aria-label="İyileştirilmiş görüntünün yatay yüzdesi"
+        />
+      </label>
+
+      <label class="checkbox-field">
+        <input id="show-hud" type="checkbox" />
+        Yerel performans HUD'unu göster
+      </label>
+
+      <p class="privacy">Video kareleri cihazdan ayrılmaz.</p>
+    </main>
+    <script type="module" src="./popup.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,11 @@
+Third-party notices
+
+This project is an original implementation. It does not currently redistribute
+third-party model weights or runtime binaries.
+
+The project documents Anime4K and other research candidates for comparison;
+those projects retain their own licenses. No candidate's code or weights are
+included in the extension package unless a future release updates this notice.
+
+Development tools are installed through npm and remain development
+dependencies; their licenses are available in node_modules and package-lock.

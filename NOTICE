@@ -1,0 +1,6 @@
+WebGPU Video Upscaler
+
+Copyright (c) 2026 WebGPU Video Upscaler contributors.
+This distribution includes original extension code and bundled WGSL shader
+implementations. Third-party attributions and model provenance are listed in
+THIRD_PARTY_NOTICES and docs/MODEL_PROVENANCE.md.

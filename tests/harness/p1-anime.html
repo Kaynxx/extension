@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:," />
+    <title>P1 Anime WebGPU Benchmark</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: system-ui, sans-serif;
+        background: #071019;
+        color: #eaf7ff;
+      }
+      body {
+        margin: 0;
+        padding: 24px;
+      }
+      main {
+        display: grid;
+        gap: 18px;
+        max-width: 1180px;
+        margin: auto;
+      }
+      header,
+      .controls,
+      .metrics {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      button,
+      select {
+        padding: 9px 12px;
+        border: 1px solid #386070;
+        border-radius: 8px;
+        background: #112431;
+        color: inherit;
+      }
+      button {
+        cursor: pointer;
+        background: #087d99;
+        font-weight: 700;
+      }
+      .stage {
+        position: relative;
+        width: min(100%, 960px);
+        aspect-ratio: 16/9;
+        overflow: hidden;
+        border: 1px solid #294553;
+        background: #020507;
+      }
+      #output {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background: #020507;
+        z-index: 2;
+      }
+      #source-video {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        z-index: 1;
+      }
+      .stage.enhanced #source-video {
+        clip-path: inset(0 var(--original-right, 100%) 0 0);
+      }
+      .stage.enhanced #output {
+        clip-path: inset(0 0 0 var(--enhanced-left, 0%));
+      }
+      .divider {
+        position: absolute;
+        z-index: 3;
+        top: 0;
+        bottom: 0;
+        left: var(--split, 50%);
+        width: 2px;
+        background: #fff;
+        pointer-events: none;
+      }
+      .metrics {
+        padding: 12px;
+        border-radius: 10px;
+        background: #10202b;
+      }
+      .metrics span {
+        min-width: 130px;
+      }
+      code {
+        color: #77e0f2;
+      }
+      #source-canvas {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        left: -10000px;
+        top: -10000px;
+        opacity: 0;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <h1>P1 Anime4K 1080p→4K</h1>
+          <p>
+            Headed WebGPU throughput benchmarkı: sentetik 24/30 FPS cadence + canvas
+            <code>ImageBitmap</code> kaynağı. Native HTMLVideoElement kanıtı P0 koşusundadır.
+          </p>
+        </div>
+      </header>
+      <section class="controls">
+        <label
+          >Seviye
+          <select id="quality">
+            <option value="low">low</option>
+            <option value="high">high</option>
+          </select></label
+        >
+        <label
+          >Kaynak FPS
+          <select id="fps">
+            <option value="24">24</option>
+            <option value="30" selected>30</option>
+          </select></label
+        >
+        <label
+          >Kare
+          <select id="frames">
+            <option value="12">12 (smoke)</option>
+            <option value="120">120</option>
+            <option value="300">300</option>
+          </select></label
+        >
+        <label>A/B <input id="split" type="range" min="0" max="100" value="50" /></label>
+        <button id="run" type="button">Benchmarkı çalıştır</button>
+      </section>
+      <section
+        id="stage"
+        class="stage enhanced"
+        style="--split: 50%; --original-right: 50%; --enhanced-left: 50%"
+      >
+        <video id="source-video" muted playsinline></video>
+        <canvas id="output" width="3840" height="2160"></canvas>
+        <div class="divider" aria-hidden="true"></div>
+      </section>
+      <section id="metrics" class="metrics" aria-live="polite">
+        <span>Durum: <strong id="status">hazır</strong></span>
+        <span>p50: <strong id="p50">—</strong></span>
+        <span>p95: <strong id="p95">—</strong></span>
+        <span>p99: <strong id="p99">—</strong></span>
+        <span>Sunulan: <strong id="presented">0</strong></span>
+        <span>Kaçan: <strong id="missed">0</strong></span>
+        <span>Atlanan: <strong id="skipped">0</strong></span>
+        <span>Stale: <strong id="stale">0</strong></span>
+        <span>Bypass: <strong id="bypass">0</strong></span>
+      </section>
+      <canvas id="source-canvas" width="1920" height="1080"></canvas>
+    </main>
+    <script type="module" src="./p1-anime.ts"></script>
+  </body>
+</html>

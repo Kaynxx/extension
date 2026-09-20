@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:," />
+    <title>P1 Adaptive WebGPU Benchmark</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: system-ui, sans-serif;
+        background: #071019;
+        color: #eaf7ff;
+      }
+      body {
+        margin: 0;
+        padding: 24px;
+      }
+      main {
+        max-width: 960px;
+        margin: auto;
+      }
+      #output {
+        width: 100%;
+        aspect-ratio: 16/9;
+        background: #020507;
+      }
+      #source-canvas {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        left: -10000px;
+        top: -10000px;
+        opacity: 0;
+        pointer-events: none;
+      }
+      code {
+        color: #77e0f2;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>P1 Anime4K adaptive kalite</h1>
+      <p>
+        Headless Chromium'da aynı üretim <code>AdaptiveQualityController</code> ve
+        <code>FrameScheduler</code> ile high→low overload ve low→high recovery koşusu.
+      </p>
+      <canvas id="output" width="3840" height="2160"></canvas>
+      <canvas id="source-canvas" width="1920" height="1080"></canvas>
+    </main>
+    <script type="module" src="./p1-adaptive.ts"></script>
+  </body>
+</html>
