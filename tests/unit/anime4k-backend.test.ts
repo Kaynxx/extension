@@ -86,6 +86,28 @@ describe("Anime4K performance levels", () => {
     backend.dispose();
   });
 
+  it("routes temporal reset through Anime4K prepared presentation", async () => {
+    const gpu = createFakeGpu();
+    const backend = new Anime4kBackend();
+    await backend.initialize({
+      device: gpu.device,
+      canvasContext: gpu.context,
+      presentationFormat: "bgra8unorm",
+      initialInput: { width: 1920, height: 1080 },
+      initialOutput: { width: 3840, height: 2160 },
+      profile: "anime",
+      qualityLevel: "low",
+    });
+    const frame = await backend.prepare({
+      videoWidth: 1920,
+      videoHeight: 1080,
+    } as HTMLVideoElement);
+    frame.present();
+    backend.resetTemporal("scene-cut");
+    expect(gpu.resourceCreations().buffers).toBeGreaterThanOrEqual(2);
+    backend.dispose();
+  });
+
   it("initializes the direct x3 route without changing its pass map", async () => {
     const gpu = createFakeGpu();
     const backend = new Anime4kBackend();
@@ -250,6 +272,7 @@ function createFakeGpu(): {
           end: () => undefined,
         };
       },
+      copyTextureToTexture: () => undefined,
       finish: () => ({}),
     }) as unknown as GPUCommandEncoder;
   let resolveLost: ((info: GPUDeviceLostInfo) => void) | undefined;
