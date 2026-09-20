@@ -203,7 +203,11 @@ export class Anime4kBackend implements UpscalerBackend {
       format: "rgba8unorm",
       // Dawn/Chrome requires COPY_DST sources used by
       // copyExternalImageToTexture to also declare RenderAttachment usage.
-      usage: TEXTURE_USAGE_COPY_DST | TEXTURE_USAGE_BINDING | TEXTURE_USAGE_RENDER_ATTACHMENT,
+      usage:
+        TEXTURE_USAGE_COPY_DST |
+        TEXTURE_USAGE_BINDING |
+        TEXTURE_USAGE_RENDER_ATTACHMENT |
+        TEXTURE_USAGE_COPY_SRC,
     });
     this.intermediateTexture = device.createTexture({
       label: "Anime4K high-quality intermediate",

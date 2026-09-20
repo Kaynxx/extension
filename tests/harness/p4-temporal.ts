@@ -41,6 +41,9 @@ const frames: Record<string, { hash: string; cpuSubmitMs: number; meanLuma: numb
     cpuSubmitMs: number;
     meanLuma: number;
     cpuHash: string;
+    cpuLuma?: number;
+    bitmapHash?: string;
+    bitmapLuma?: number;
     sourceHash: string;
     finalHash: string;
     bitmapSize: { width: number; height: number };
@@ -60,12 +63,12 @@ const frames: Record<string, { hash: string; cpuSubmitMs: number; meanLuma: numb
       await device.queue.onSubmittedWorkDone();
       const temporalReadback = await backend.debugReadbackTemporalOutput();
       samples.push({
-        hash: hashPixels(temporalReadback.pixels),
+        hash: await hashPixels(temporalReadback.pixels),
         meanLuma: meanLuma(temporalReadback.pixels),
-        sourceHash: hashPixels(sourceReadback.pixels),
-        finalHash: hashPixels(finalReadback.pixels),
+        sourceHash: await hashPixels(sourceReadback.pixels),
+        finalHash: await hashPixels(finalReadback.pixels),
         bitmapSize: { width: frame.width, height: frame.height },
-        cpuHash: hashPixels(cpuPixels),
+        cpuHash: await hashPixels(cpuPixels),
         cpuSubmitMs: prepared.stats.cpuSubmitMs,
       });
     } finally {
@@ -95,6 +98,9 @@ const frames: Record<string, { hash: string; cpuSubmitMs: number; meanLuma: numb
       sourceHash: string;
       finalHash: string;
       temporalHash: string;
+      cpuLuma: number;
+      bitmapHash: string;
+      bitmapLuma: number;
       sourceLuma: number;
       finalLuma: number;
       temporalLuma: number;
@@ -104,6 +110,12 @@ const frames: Record<string, { hash: string; cpuSubmitMs: number; meanLuma: numb
       await new Promise(requestAnimationFrame);
       const cpuPixels = ctx.getImageData(0, 0, source.width, source.height).data;
       const frame = await createImageBitmap(source);
+      const roundtrip = document.createElement("canvas");
+      roundtrip.width = source.width;
+      roundtrip.height = source.height;
+      const roundtripContext = roundtrip.getContext("2d", { willReadFrequently: true })!;
+      roundtripContext.drawImage(frame, 0, 0);
+      const bitmapPixels = roundtripContext.getImageData(0, 0, source.width, source.height).data;
       let prepared: PreparedFrame | undefined;
       try {
         prepared = await backend.prepare(frame);
@@ -114,11 +126,14 @@ const frames: Record<string, { hash: string; cpuSubmitMs: number; meanLuma: numb
         const temporalReadback = await backend.debugReadbackTemporalOutput();
         stages.push({
           color,
-          cpuHash: hashPixels(cpuPixels),
+          cpuHash: await hashPixels(cpuPixels),
+          cpuLuma: meanLuma(cpuPixels),
+          bitmapHash: await hashPixels(bitmapPixels),
+          bitmapLuma: meanLuma(bitmapPixels),
           bitmapSize: { width: frame.width, height: frame.height },
-          sourceHash: hashPixels(sourceReadback.pixels),
-          finalHash: hashPixels(finalReadback.pixels),
-          temporalHash: hashPixels(temporalReadback.pixels),
+          sourceHash: await hashPixels(sourceReadback.pixels),
+          finalHash: await hashPixels(finalReadback.pixels),
+          temporalHash: await hashPixels(temporalReadback.pixels),
           sourceLuma: meanLuma(sourceReadback.pixels),
           finalLuma: meanLuma(finalReadback.pixels),
           temporalLuma: meanLuma(temporalReadback.pixels),
@@ -151,11 +166,10 @@ function draw(s: Scenario, i: number): void {
     ctx.stroke();
   }
 }
-function hashPixels(pixels: ArrayLike<number>): string {
-  let h = 2166136261;
-  for (let index = 0; index < pixels.length; index += 1)
-    h = Math.imul(h ^ (pixels[index] ?? 0), 16777619);
-  return (h >>> 0).toString(16);
+async function hashPixels(pixels: ArrayLike<number>): Promise<string> {
+  const bytes = Uint8Array.from({ length: pixels.length }, (_, index) => pixels[index] ?? 0);
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+  return Array.from(digest, (value) => value.toString(16).padStart(2, "0")).join("");
 }
 
 function meanLuma(pixels: ArrayLike<number>): number {

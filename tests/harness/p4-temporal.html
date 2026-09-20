@@ -2,7 +2,20 @@
 <html>
   <body>
     <canvas id="output" width="1280" height="720"></canvas
-    ><canvas id="source" width="640" height="360" hidden></canvas>
+    ><canvas
+      id="source"
+      width="640"
+      height="360"
+      style="
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        left: -10000px;
+        top: -10000px;
+        opacity: 0;
+        pointer-events: none;
+      "
+    ></canvas>
     <pre id="status"></pre>
     <script type="module" src="./p4-temporal.ts"></script>
   </body>
