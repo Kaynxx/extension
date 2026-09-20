@@ -2,7 +2,7 @@ import { Anime4kBackend } from "../../src/core/gpu/anime4k-backend";
 import type { PreparedFrame, RenderSource } from "../../src/core/contracts";
 
 type Scenario = "shimmer" | "fast-pan" | "scene-cut";
-type Run = { temporal: boolean; fps: 30 | 60; scenario: Scenario };
+type Run = { temporal: boolean; fps: 30 | 60; scenario: Scenario; blend?: number; gate?: number };
 const source = document.querySelector<HTMLCanvasElement>("#source")!;
 const output = document.querySelector<HTMLCanvasElement>("#output")!;
 const status = document.querySelector<HTMLElement>("#status")!;
@@ -34,8 +34,12 @@ const frames: Record<string, { hash: string; cpuSubmitMs: number; meanLuma: numb
   }
 ).__P4_RUN__ = async (run) => {
   backend.resetTemporal("manual");
+  backend.setTemporalParametersForDiagnostics(run.blend ?? 0.12, run.gate ?? 0.045);
   backend.setTemporalEnabled(run.temporal);
-  const key = `${run.temporal ? "on" : "off"}-${run.fps}-${run.scenario}`;
+  const blend = run.blend ?? 0.12;
+  const gate = run.gate ?? 0.045;
+  const parameterKey = `b${blend}-g${gate}`;
+  const key = `${parameterKey}-${run.temporal ? "on" : "off"}-${run.fps}-${run.scenario}`;
   const samples: {
     hash: string;
     cpuSubmitMs: number;
@@ -99,6 +103,8 @@ const frames: Record<string, { hash: string; cpuSubmitMs: number; meanLuma: numb
     fps: run.fps,
     temporal: run.temporal,
     scenario: run.scenario,
+    blend,
+    gate,
     frames: samples,
     resetGeneration: true,
     gpuErrors,

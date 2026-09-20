@@ -94,6 +94,9 @@ export class Anime4kBackend implements UpscalerBackend {
   private activeFrameToken: number | undefined;
   private deviceLostListenerGeneration = 0;
   private strengthMultiplier = 1.0;
+  /** Harness-only override; production keeps TEMPORAL_STABILIZATION defaults. */
+  private diagnosticTemporalBlend: number | undefined;
+  private diagnosticTemporalGate: number | undefined;
 
   async initialize(context: BackendContext): Promise<void> {
     if (this.initialized) {
@@ -301,6 +304,23 @@ export class Anime4kBackend implements UpscalerBackend {
     this.temporalEnabled = enabled;
     this.historyValid = false;
     this.writeTemporalParameters();
+  }
+
+  /**
+   * Deterministic P4 sweep hook. It is intentionally explicit and bounded so
+   * diagnostics cannot silently change production policy/constants.
+   */
+  setTemporalParametersForDiagnostics(blend: number, gate: number): void {
+    this.requireUsable();
+    if (!Number.isFinite(blend) || blend < 0 || blend > TEMPORAL_STABILIZATION.maxBlend) {
+      throw new Anime4kBackendError("invalid-scale", "Temporal diagnostic blend sınır dışında.");
+    }
+    if (!Number.isFinite(gate) || gate < 0 || gate > 1) {
+      throw new Anime4kBackendError("invalid-scale", "Temporal diagnostic gate sınır dışında.");
+    }
+    this.diagnosticTemporalBlend = blend;
+    this.diagnosticTemporalGate = gate;
+    this.resetTemporal("diagnostic-parameter-change");
   }
 
   /** Harness-only stage readbacks; production paths never call these debug hooks. */
@@ -564,8 +584,8 @@ export class Anime4kBackend implements UpscalerBackend {
       this.temporalBuffer,
       0,
       new Float32Array([
-        TEMPORAL_STABILIZATION.blend,
-        TEMPORAL_STABILIZATION.gate,
+        this.diagnosticTemporalBlend ?? TEMPORAL_STABILIZATION.blend,
+        this.diagnosticTemporalGate ?? TEMPORAL_STABILIZATION.gate,
         this.temporalEnabled && this.historyValid ? 1 : 0,
         0,
       ]),
