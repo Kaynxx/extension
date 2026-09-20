@@ -25,14 +25,18 @@ await backend.initialize({
   qualityLevel: "low",
 });
 backend.setTemporalEnabled(false);
-const frames: Record<string, { hash: string; cpuSubmitMs: number }[]> = {};
+const frames: Record<string, { hash: string; cpuSubmitMs: number; meanLuma: number }[]> = {};
 (
-  window as Window & { __P4_RUN__?: (run: Run) => Promise<unknown>; __P4_STOP__?: () => void }
+  window as Window & {
+    __P4_RUN__?: (run: Run) => Promise<unknown>;
+    __P4_COLOR_CHECK__?: () => Promise<{ first: string; second: string; changed: boolean }>;
+    __P4_STOP__?: () => void;
+  }
 ).__P4_RUN__ = async (run) => {
   backend.resetTemporal("manual");
   backend.setTemporalEnabled(run.temporal);
   const key = `${run.temporal ? "on" : "off"}-${run.fps}-${run.scenario}`;
-  const samples: { hash: string; cpuSubmitMs: number }[] = [];
+  const samples: { hash: string; cpuSubmitMs: number; meanLuma: number }[] = [];
   const count = run.fps === 60 ? 12 : 8;
   for (let i = 0; i < count; i += 1) {
     draw(run.scenario, i);
@@ -41,9 +45,14 @@ const frames: Record<string, { hash: string; cpuSubmitMs: number }[]> = {};
     let prepared: PreparedFrame | undefined;
     try {
       prepared = await backend.prepare(frame);
+      const readback = await backend.debugReadbackFinalTexture();
       prepared.present();
       await device.queue.onSubmittedWorkDone();
-      samples.push({ hash: await hashProcessedOutput(), cpuSubmitMs: prepared.stats.cpuSubmitMs });
+      samples.push({
+        hash: hashPixels(readback.pixels),
+        meanLuma: meanLuma(readback.pixels),
+        cpuSubmitMs: prepared.stats.cpuSubmitMs,
+      });
     } finally {
       frame.close();
     }
@@ -61,6 +70,27 @@ const frames: Record<string, { hash: string; cpuSubmitMs: number }[]> = {};
     outputSize: { width: output.width, height: output.height },
   };
 };
+(window as Window & { __P4_COLOR_CHECK__?: () => Promise<unknown> }).__P4_COLOR_CHECK__ =
+  async () => {
+    backend.setTemporalEnabled(false);
+    const hashes: string[] = [];
+    for (const color of ["#e83d52", "#1d66e5"]) {
+      ctx.fillStyle = color;
+      ctx.fillRect(0, 0, source.width, source.height);
+      await new Promise(requestAnimationFrame);
+      const frame = await createImageBitmap(source);
+      let prepared: PreparedFrame | undefined;
+      try {
+        prepared = await backend.prepare(frame);
+        prepared.present();
+        await device.queue.onSubmittedWorkDone();
+        hashes.push(hashPixels((await backend.debugReadbackFinalTexture()).pixels));
+      } finally {
+        frame.close();
+      }
+    }
+    return { first: hashes[0] ?? "", second: hashes[1] ?? "", changed: hashes[0] !== hashes[1] };
+  };
 (window as Window & { __P4_RUN__?: unknown; __P4_STOP__?: () => void }).__P4_STOP__ = () => {
   backend.dispose();
   device.destroy();
@@ -78,17 +108,17 @@ function draw(s: Scenario, i: number): void {
     ctx.stroke();
   }
 }
-async function hashProcessedOutput(): Promise<string> {
-  const bitmap = await createImageBitmap(output);
-  const measure = document.createElement("canvas");
-  measure.width = 128;
-  measure.height = 72;
-  const measureContext = measure.getContext("2d", { willReadFrequently: true });
-  if (!measureContext) throw new Error("processed output readback context unavailable");
-  measureContext.drawImage(bitmap, 0, 0, measure.width, measure.height);
-  bitmap.close();
-  const pixels = measureContext.getImageData(0, 0, measure.width, measure.height).data;
+function hashPixels(pixels: Uint8Array): string {
   let h = 2166136261;
   for (const value of pixels) h = Math.imul(h ^ value, 16777619);
   return (h >>> 0).toString(16);
+}
+
+function meanLuma(pixels: Uint8Array): number {
+  let total = 0;
+  for (let i = 0; i < pixels.length; i += 4) {
+    total +=
+      0.2126 * (pixels[i] ?? 0) + 0.7152 * (pixels[i + 1] ?? 0) + 0.0722 * (pixels[i + 2] ?? 0);
+  }
+  return total / (pixels.length / 4);
 }

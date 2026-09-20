@@ -76,12 +76,13 @@ fn edgeAwareMain(input: VertexOutput) -> @location(0) vec4f {
   let normalOffset = normal * t * 0.55;
   let along = (sampleAt(input.uv - tangentOffset) + sampleAt(input.uv + tangentOffset)) * 0.5;
   let across = (sampleAt(input.uv - normalOffset) + sampleAt(input.uv + normalOffset)) * 0.5;
-  let edgeWeight = smoothstep(0.025, 0.18, magnitude);
-  let candidate = center + (along - across) * params.edgeStrength * edgeWeight;
+  let edgeWeight = smoothstep(0.02, 0.16, magnitude);
+  let candidate = center + (along - across) * (params.edgeStrength * 3.0) * edgeWeight;
 
   let localMin = min(center, min(min(north, south), min(west, east)));
   let localMax = max(center, max(max(north, south), max(west, east)));
-  return vec4f(clamp(candidate, localMin, localMax), 1.0);
+  let localRange = max(vec3f(0.001), localMax - localMin);
+  return vec4f(clamp(candidate, max(vec3f(0.0), localMin - localRange * 0.2), min(vec3f(1.0), localMax + localRange * 0.2)), 1.0);
 }
 `;
 
@@ -130,13 +131,14 @@ fn lineRefinementMain(input: VertexOutput) -> @location(0) vec4f {
   let diagonalMean = (nw + ne + sw + se) * 0.25;
   let surround = crossMean * 0.75 + diagonalMean * 0.25;
   let contrast = luma(center) - luma(surround);
-  let lineWeight = smoothstep(0.012, 0.11, abs(contrast));
-  let correction = clamp(contrast * params.lineStrength * lineWeight, -0.025, 0.025);
+  let lineWeight = smoothstep(0.01, 0.10, abs(contrast));
+  let correction = clamp(contrast * params.lineStrength * lineWeight * 3.5, -0.15, 0.15);
   let candidate = center + vec3f(correction);
 
   let localMin = min(center, min(min(north, south), min(west, east)));
   let localMax = max(center, max(max(north, south), max(west, east)));
-  return vec4f(clamp(candidate, localMin, localMax), 1.0);
+  let localRange = max(vec3f(0.001), localMax - localMin);
+  return vec4f(clamp(candidate, max(vec3f(0.0), localMin - localRange * 0.2), min(vec3f(1.0), localMax + localRange * 0.2)), 1.0);
 }
 `;
 
@@ -159,5 +161,15 @@ fn presentMain(input: VertexOutput) -> @location(0) vec4f {
   let motion = smoothstep(temporal.gate, temporal.gate * 2.0, abs(currentLuma - previousLuma));
   let weight = clamp(temporal.blend * (1.0 - motion), 0.0, 0.18);
   return mix(current, previous, weight);
+}
+`;
+
+export const ANIME_BLIT_SHADER = /* wgsl */ `
+${FULLSCREEN_VERTEX}
+@group(0) @binding(0) var sourceTexture: texture_2d<f32>;
+@group(0) @binding(1) var sourceSampler: sampler;
+@fragment
+fn presentMain(input: VertexOutput) -> @location(0) vec4f {
+  return textureSample(sourceTexture, sourceSampler, input.uv);
 }
 `;

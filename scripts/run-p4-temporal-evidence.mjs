@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
@@ -40,6 +39,7 @@ try {
     throw new Error(`Headless UA rejected: ${userAgent}`);
   }
   await page.waitForFunction(() => Boolean(window.__P4_RUN__), undefined, { timeout: 20000 });
+  const colorCheck = await page.evaluate(() => window.__P4_COLOR_CHECK__?.());
   for (const fps of [30, 60])
     for (const scenario of scenarios)
       for (const temporal of [false, true]) {
@@ -52,14 +52,7 @@ try {
         const shot = await page.screenshot();
         const file = `${temporal ? "on" : "off"}-${fps}-${scenario}.png`;
         screenshots.push({ file, shot });
-        rows.push({
-          ...result,
-          screenshot: {
-            file,
-            sha256: createHash("sha256").update(shot).digest("hex"),
-            bytes: shot.byteLength,
-          },
-        });
+        rows.push({ ...result, screenshot: { file, bytes: shot.byteLength } });
       }
   const report = {
     generatedAt: new Date().toISOString(),
@@ -73,12 +66,14 @@ try {
       p95Ms30: 24,
       p95Ms60: 16.7,
     },
+    colorCheck,
     rows,
     canonical: false,
-    captureStatus:
-      "headed-output-visible-no-gpu-errors; processed ImageBitmap readback hashes are stable and are not accepted as temporal metrics",
+    captureStatus: "headed-final-texture-readback",
     failure:
-      "Temporal improvement and ghost/cut metrics remain pending because the processed-surface readback is not frame-sensitive; no canonical evidence was written.",
+      colorCheck?.changed === false
+        ? "Diagnostic failure: known changing-color readback produced identical hashes; temporal output texture is black/unchanged."
+        : "Canonical promotion remains pending until OFF/ON metrics and human review pass.",
   };
   await mkdir(out, { recursive: true });
   for (const s of screenshots) await writeFile(path.join(out, s.file), s.shot);

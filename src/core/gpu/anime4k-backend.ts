@@ -11,6 +11,7 @@ import {
   ANIME_EDGE_AWARE_SHADER,
   ANIME_LINE_REFINEMENT_SHADER,
   ANIME_PRESENT_SHADER,
+  ANIME_BLIT_SHADER,
 } from "../models/anime4k-shaders";
 import { ANIME_PROFILE_LEVELS, getAnimePassCount } from "../profiles/anime-profile";
 import { TEMPORAL_STABILIZATION } from "./webgpu-backend";
@@ -18,6 +19,7 @@ import { TEMPORAL_STABILIZATION } from "./webgpu-backend";
 // WebGPU usage flags are fixed by the specification. Keeping the minimal flags
 // local avoids relying on browser globals during Node-based contract tests.
 const BUFFER_USAGE_COPY_DST = 0x0008;
+const BUFFER_USAGE_MAP_READ = 0x0001;
 const BUFFER_USAGE_UNIFORM = 0x0040;
 const TEXTURE_USAGE_COPY_DST = 0x02;
 const TEXTURE_USAGE_BINDING = 0x04;
@@ -65,6 +67,7 @@ export class Anime4kBackend implements UpscalerBackend {
   private edgePipeline: GPURenderPipeline | undefined;
   private refinementPipeline: GPURenderPipeline | undefined;
   private presentPipeline: GPURenderPipeline | undefined;
+  private temporalPipeline: GPURenderPipeline | undefined;
   private sourceTexture: GPUTexture | undefined;
   private intermediateTexture: GPUTexture | undefined;
   private finalTexture: GPUTexture | undefined;
@@ -73,6 +76,8 @@ export class Anime4kBackend implements UpscalerBackend {
   private sourceBindGroup: GPUBindGroup | undefined;
   private refinementBindGroup: GPUBindGroup | undefined;
   private presentBindGroup: GPUBindGroup | undefined;
+  private temporalBindGroup: GPUBindGroup | undefined;
+  private temporalOutputTexture: GPUTexture | undefined;
   private temporalBuffer: GPUBuffer | undefined;
   private historyTexture: GPUTexture | undefined;
   private historyValid = false;
@@ -88,6 +93,7 @@ export class Anime4kBackend implements UpscalerBackend {
   private nextFrameToken = 0;
   private activeFrameToken: number | undefined;
   private deviceLostListenerGeneration = 0;
+  private strengthMultiplier = 1.0;
 
   async initialize(context: BackendContext): Promise<void> {
     if (this.initialized) {
@@ -135,10 +141,17 @@ export class Anime4kBackend implements UpscalerBackend {
       "lineRefinementMain",
       "rgba8unorm",
     );
+    this.temporalPipeline = createPipeline(
+      device,
+      "Anime4K temporal stabilization",
+      ANIME_PRESENT_SHADER,
+      "presentMain",
+      "rgba8unorm",
+    );
     this.presentPipeline = createPipeline(
       device,
       "Anime4K prepared-frame presentation",
-      ANIME_PRESENT_SHADER,
+      ANIME_BLIT_SHADER,
       "presentMain",
       context.presentationFormat,
     );
@@ -210,6 +223,12 @@ export class Anime4kBackend implements UpscalerBackend {
       format: "rgba8unorm",
       usage: TEXTURE_USAGE_BINDING | TEXTURE_USAGE_COPY_DST,
     });
+    this.temporalOutputTexture = device.createTexture({
+      label: "Anime4K temporal output",
+      size: [output.width, output.height],
+      format: "rgba8unorm",
+      usage: TEXTURE_USAGE_RENDER_ATTACHMENT | TEXTURE_USAGE_BINDING | TEXTURE_USAGE_COPY_SRC,
+    });
     this.intermediateView = this.intermediateTexture.createView();
     this.finalView = this.finalTexture.createView();
 
@@ -231,14 +250,22 @@ export class Anime4kBackend implements UpscalerBackend {
         { binding: 2, resource: { buffer: this.requireParamsBuffer() } },
       ],
     });
-    this.presentBindGroup = device.createBindGroup({
+    this.temporalBindGroup = device.createBindGroup({
       label: "Anime4K presentation bindings",
-      layout: this.requirePresentPipeline().getBindGroupLayout(0),
+      layout: this.requireTemporalPipeline().getBindGroupLayout(0),
       entries: [
         { binding: 0, resource: this.finalTexture.createView() },
         { binding: 1, resource: this.requireHistoryTexture().createView() },
         { binding: 2, resource: this.requireSampler() },
         { binding: 3, resource: { buffer: this.requireTemporalBuffer() } },
+      ],
+    });
+    this.presentBindGroup = device.createBindGroup({
+      label: "Anime4K canvas blit bindings",
+      layout: this.requirePresentPipeline().getBindGroupLayout(0),
+      entries: [
+        { binding: 0, resource: this.temporalOutputTexture.createView() },
+        { binding: 1, resource: this.requireSampler() },
       ],
     });
     this.writeTemporalParameters();
@@ -249,6 +276,12 @@ export class Anime4kBackend implements UpscalerBackend {
     this.requireUsable();
     this.qualityLevel = level;
     this.resetTemporal("quality-change");
+    this.writeParameters();
+  }
+
+  setStrength(strength: number): void {
+    this.requireUsable();
+    this.strengthMultiplier = Math.max(0, Math.min(100, strength)) / 50;
     this.writeParameters();
   }
 
@@ -264,6 +297,46 @@ export class Anime4kBackend implements UpscalerBackend {
     this.temporalEnabled = enabled;
     this.historyValid = false;
     this.writeTemporalParameters();
+  }
+
+  /** Harness-only GPU readback; production paths never call this debug hook. */
+  async debugReadbackFinalTexture(): Promise<{
+    width: number;
+    height: number;
+    pixels: Uint8Array;
+  }> {
+    this.requireUsable();
+    const device = this.requireDevice();
+    const texture = this.requireTemporalOutputTexture();
+    const bytesPerRow = Math.ceil((this.outputSize.width * 4) / 256) * 256;
+    const buffer = device.createBuffer({
+      label: "P4 debug final texture readback",
+      size: bytesPerRow * this.outputSize.height,
+      usage: BUFFER_USAGE_COPY_DST | BUFFER_USAGE_MAP_READ,
+    });
+    try {
+      const encoder = device.createCommandEncoder({ label: "P4 debug texture readback" });
+      encoder.copyTextureToBuffer(
+        { texture },
+        { buffer, bytesPerRow, rowsPerImage: this.outputSize.height },
+        [this.outputSize.width, this.outputSize.height, 1],
+      );
+      device.queue.submit([encoder.finish()]);
+      await device.queue.onSubmittedWorkDone();
+      await buffer.mapAsync(0x0001);
+      const mapped = new Uint8Array(buffer.getMappedRange());
+      const pixels = new Uint8Array(this.outputSize.width * this.outputSize.height * 4);
+      for (let row = 0; row < this.outputSize.height; row += 1) {
+        pixels.set(
+          mapped.subarray(row * bytesPerRow, row * bytesPerRow + this.outputSize.width * 4),
+          row * this.outputSize.width * 4,
+        );
+      }
+      buffer.unmap();
+      return { width: this.outputSize.width, height: this.outputSize.height, pixels };
+    } finally {
+      buffer.destroy();
+    }
   }
 
   async prepare(source: RenderSource): Promise<PreparedFrame> {
@@ -366,6 +439,7 @@ export class Anime4kBackend implements UpscalerBackend {
     this.edgePipeline = undefined;
     this.refinementPipeline = undefined;
     this.presentPipeline = undefined;
+    this.temporalPipeline = undefined;
     this.canvasContext = undefined;
     this.deviceLostListenerGeneration += 1;
     // The device is injected and may be shared by other backends; do not destroy it.
@@ -403,13 +477,20 @@ export class Anime4kBackend implements UpscalerBackend {
         });
         encodePass(
           encoder,
+          "Anime4K temporal stabilization pass",
+          this.requireTemporalOutputTexture().createView(),
+          this.requireTemporalPipeline(),
+          this.requireTemporalBindGroup(),
+        );
+        encodePass(
+          encoder,
           "Anime4K scheduler-approved presentation",
           this.requireCanvasContext().getCurrentTexture().createView(),
           this.requirePresentPipeline(),
           this.requirePresentBindGroup(),
         );
         encoder.copyTextureToTexture(
-          { texture: this.requireFinalTexture() },
+          { texture: this.requireTemporalOutputTexture() },
           { texture: this.requireHistoryTexture() },
           [this.outputSize.width, this.outputSize.height, 1],
         );
@@ -434,8 +515,8 @@ export class Anime4kBackend implements UpscalerBackend {
         1 / this.inputSize.height,
         1 / this.outputSize.width,
         1 / this.outputSize.height,
-        profile.edgeStrength,
-        profile.lineStrength,
+        profile.edgeStrength * this.strengthMultiplier,
+        profile.lineStrength * this.strengthMultiplier,
         0,
         0,
       ]),
@@ -461,16 +542,19 @@ export class Anime4kBackend implements UpscalerBackend {
     this.sourceTexture?.destroy();
     this.intermediateTexture?.destroy();
     this.finalTexture?.destroy();
+    this.temporalOutputTexture?.destroy();
     this.historyTexture?.destroy();
     this.sourceTexture = undefined;
     this.intermediateTexture = undefined;
     this.finalTexture = undefined;
+    this.temporalOutputTexture = undefined;
     this.historyTexture = undefined;
     this.intermediateView = undefined;
     this.finalView = undefined;
     this.sourceBindGroup = undefined;
     this.refinementBindGroup = undefined;
     this.presentBindGroup = undefined;
+    this.temporalBindGroup = undefined;
   }
 
   private gpuFailure(message: string, cause: unknown): Anime4kBackendError {
@@ -550,6 +634,12 @@ export class Anime4kBackend implements UpscalerBackend {
     return this.presentPipeline;
   }
 
+  private requireTemporalPipeline(): GPURenderPipeline {
+    if (!this.temporalPipeline)
+      throw new Anime4kBackendError("not-initialized", "Temporal pipeline hazır değil.");
+    return this.temporalPipeline;
+  }
+
   private requireSourceTexture(): GPUTexture {
     if (!this.sourceTexture)
       throw new Anime4kBackendError("not-initialized", "Kaynak texture hazır değil.");
@@ -570,12 +660,6 @@ export class Anime4kBackend implements UpscalerBackend {
     return this.finalView;
   }
 
-  private requireFinalTexture(): GPUTexture {
-    if (!this.finalTexture)
-      throw new Anime4kBackendError("not-initialized", "Final texture hazır değil.");
-    return this.finalTexture;
-  }
-
   private requireSourceBindGroup(): GPUBindGroup {
     if (!this.sourceBindGroup)
       throw new Anime4kBackendError("not-initialized", "Kaynak bind group hazır değil.");
@@ -592,6 +676,18 @@ export class Anime4kBackend implements UpscalerBackend {
     if (!this.presentBindGroup)
       throw new Anime4kBackendError("not-initialized", "Present bind group hazır değil.");
     return this.presentBindGroup;
+  }
+
+  private requireTemporalBindGroup(): GPUBindGroup {
+    if (!this.temporalBindGroup)
+      throw new Anime4kBackendError("not-initialized", "Temporal bind group hazır değil.");
+    return this.temporalBindGroup;
+  }
+
+  private requireTemporalOutputTexture(): GPUTexture {
+    if (!this.temporalOutputTexture)
+      throw new Anime4kBackendError("not-initialized", "Temporal output texture hazır değil.");
+    return this.temporalOutputTexture;
   }
 }
 
