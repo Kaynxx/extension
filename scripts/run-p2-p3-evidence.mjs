@@ -2,16 +2,19 @@ import { createHash } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
-import { chromium } from "@playwright/test";
-import { assertHardwareGpu, summarizeGpuSystemInfo } from "./gpu-evidence.mjs";
+import {
+  assertCanonicalAcceptanceEvidence,
+  assertHardwareGpu,
+  summarizeGpuSystemInfo,
+} from "./gpu-evidence.mjs";
+import { launchP1Browser } from "./p1-browser.mjs";
 
 const root = process.cwd();
 const port = Number(process.env.P2_P3_PORT ?? 4177);
 const chromeExecutable = process.env.P1_CHROME_BIN ?? "chromium";
 const frames = Number(process.env.P2_P3_FRAMES ?? 120);
-if (process.env.P2_P3_HEADLESS === "false") {
-  throw new Error("Bu çalışma alanında headed/desktop testleri kapalıdır.");
-}
+if (process.env.P2_P3_HEADLESS === "true")
+  throw new Error("P2/P3 canonical evidence headless yüzeyde üretilemez.");
 if (![30, 60].includes(Number(process.env.P2_P3_FPS ?? 30)))
   throw new Error("FPS yalnız 30 veya 60 olabilir.");
 const harnessUrl = `http://127.0.0.1:${port}/tests/harness/p2-p3.html`;
@@ -19,21 +22,13 @@ const outputDirectory = path.join(root, "docs/testing/evidence/p2-p3");
 const server = await startServer(port);
 let browser;
 try {
-  browser = await chromium.launch({
-    executablePath: chromeExecutable,
-    headless: true,
-    args: [
-      "--enable-unsafe-webgpu",
-      "--enable-features=Vulkan",
-      "--use-angle=vulkan",
-      "--ignore-gpu-blocklist",
-    ],
-  });
+  browser = await launchP1Browser({ chromeExecutable, headless: false });
   const gpuClient = await browser.newBrowserCDPSession();
   const gpuSystemInfo = summarizeGpuSystemInfo(await gpuClient.send("SystemInfo.getInfo"));
   assertHardwareGpu(gpuSystemInfo);
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   await page.goto(harnessUrl, { waitUntil: "networkidle" });
+  const userAgents = [await page.evaluate(() => navigator.userAgent)];
   await page.waitForFunction(() => Boolean(window.__P2P3_RUN__), undefined, { timeout: 20_000 });
   const results = [];
   const screenshots = [];
@@ -59,7 +54,7 @@ try {
   const report = {
     generatedAt: new Date().toISOString(),
     command: "node scripts/run-p2-p3-evidence.mjs",
-    headless: true,
+    headless: false,
     requireHardware: true,
     hardwareStatus: gpuSystemInfo.hardwareStatus,
     gpuSystemInfo,
@@ -78,6 +73,15 @@ try {
       bytes: s.data.byteLength,
     })),
   };
+  assertCanonicalAcceptanceEvidence({
+    headless: false,
+    userAgents,
+    gpuEvidence: gpuSystemInfo,
+    rawTimingSamples: results.map((result) => result.processingSamplesMs),
+    complete:
+      results.length === 8 &&
+      results.every((result) => result.failed === 0 && result.presented === result.frames),
+  });
   await mkdir(outputDirectory, { recursive: true });
   for (const screenshot of screenshots)
     await writeFile(path.join(outputDirectory, screenshot.name), screenshot.data);

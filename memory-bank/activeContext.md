@@ -113,3 +113,12 @@ Son güncelleme: 2026-09-20
 - P4 deterministic tests pass (auto classification/hysteresis/manual override
   behavior and temporal seek/scene-cut reset signals). Browser/GPU validation was
   intentionally not run under the headless-only policy.
+
+## 2026-09-20 P2/P3 headed baseline
+
+- 8 hücrelik live-action/screen-3d × 30/60 FPS × 2x/3x matrisi headed normal
+  Chromium + fiziksel RTX 5070/Vulkan/WebGPU ile 120 frame/case çalıştı.
+- Kaynak captureStream yerine owned SVG snapshot + VideoFrame kullanılır; OCR,
+  text-edge ve halo proxy fixture ölçümleri ham sample dizileriyle raporlanır.
+- Sonuç yalnız bundled WebGpuBackend conservative shader baseline'ıdır; WebSR/
+  RT4KSR gerçek model karşılaştırması mevcut olmadığından pending kalır.

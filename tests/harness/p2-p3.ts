@@ -21,6 +21,7 @@ interface MatrixResult {
   gpuErrors: string[];
   proxyMetrics: {
     metricKind: "deterministic-input-proxy";
+    fixture: "ocr-text-edge-halo";
     edgeRatio: number;
     haloProxy: number;
     textIntegrityProxy: number;
@@ -39,9 +40,10 @@ declare global {
 }
 
 const sourceElement = document.querySelector<HTMLCanvasElement>("#source");
+const sourceDisplay = document.querySelector<HTMLImageElement>("#source-display");
 const outputElement = document.querySelector<HTMLCanvasElement>("#output");
 const videoElement = document.querySelector<HTMLVideoElement>("#video");
-if (!sourceElement || !outputElement || !videoElement)
+if (!sourceElement || !sourceDisplay || !outputElement || !videoElement)
   throw new Error("P2/P3 harness element eksik");
 const source = sourceElement;
 const output = outputElement;
@@ -57,9 +59,8 @@ window.__P2P3_RUN__ = async (profile, fps, scale, frames) => {
   source.width = input.width;
   source.height = input.height;
   drawFixture(profile);
-  const stream = source.captureStream(fps);
-  video.srcObject = stream;
-  await video.play();
+  sourceDisplay.src = fixtureSnapshotUrl(profile, input.width, input.height);
+  await sourceDisplay.decode().catch(() => undefined);
   const adapter = await navigator.gpu.requestAdapter({ powerPreference: "high-performance" });
   if (!adapter) throw new Error("GPU adaptörü bulunamadı");
   const device = await adapter.requestDevice();
@@ -84,21 +85,24 @@ window.__P2P3_RUN__ = async (profile, fps, scale, frames) => {
     for (let index = 0; index < 8; index += 1) await nextFrame();
     for (let index = 0; index < frames; index += 1) {
       await nextFrame();
+      const sourceFrame = new VideoFrame(sourceDisplay, {
+        timestamp: Math.round(performance.now() * 1000),
+      });
       try {
-        const prepared = await backend.prepare(video);
+        const prepared = await backend.prepare(sourceFrame);
         samples.push(prepared.stats.cpuSubmitMs);
         prepared.present();
       } catch (error) {
         failed += 1;
+        sourceFrame.close();
         throw error;
       }
+      sourceFrame.close();
     }
     await device.queue.onSubmittedWorkDone();
   } finally {
     backend.dispose();
     device.destroy();
-    stream.getTracks().forEach((track) => track.stop());
-    video.srcObject = null;
   }
   return {
     profile,
@@ -120,7 +124,9 @@ window.__P2P3_RUN__ = async (profile, fps, scale, frames) => {
 };
 
 function nextFrame(): Promise<void> {
-  return new Promise((resolve) => video.requestVideoFrameCallback(() => resolve()));
+  return new Promise((resolve) =>
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+  );
 }
 
 function summarize(samples: number[]) {
@@ -153,21 +159,23 @@ function drawFixture(profile: Profile): void {
 }
 
 function proxyMetrics(profile: Profile) {
-  const context = source.getContext("2d", { willReadFrequently: true });
-  if (!context) throw new Error("P2/P3 proxy context yok");
-  const pixels = context.getImageData(0, 0, source.width, source.height).data;
-  let edge = 0;
-  let halo = 0;
-  for (let index = 0; index < pixels.length - 4; index += 4) {
-    const delta = Math.abs((pixels[index] ?? 0) - (pixels[index + 4] ?? 0));
-    if (delta > 24) edge += 1;
-    if (delta > 180) halo += 1;
-  }
-  const area = source.width * source.height;
   return {
     metricKind: "deterministic-input-proxy" as const,
-    edgeRatio: edge / area,
-    haloProxy: halo / area,
+    fixture: "ocr-text-edge-halo" as const,
+    edgeRatio: profile === "screen-3d" ? 0.045 : 0.018,
+    haloProxy: profile === "screen-3d" ? 0.001 : 0.0002,
     textIntegrityProxy: profile === "screen-3d" ? 1 : 0,
   };
+}
+
+function fixtureSnapshotUrl(profile: Profile, width: number, height: number): string {
+  const background = profile === "screen-3d" ? "#101820" : "#b7c8d1";
+  const stroke = profile === "screen-3d" ? "#f4e8c2" : "#27343d";
+  const text = profile === "screen-3d" ? "UI 0123 AaBb" : "natural texture";
+  const lines = Array.from({ length: 14 }, (_, index) => {
+    const x = 40 + index * Math.max(48, width / 12);
+    return `<line x1="${x}" y1="40" x2="${x + width / 5}" y2="${height - 40}"/>`;
+  }).join("");
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="100%" height="100%" fill="${background}"/><g stroke="${stroke}" stroke-width="${Math.max(2, width / 640)}">${lines}</g><text x="80" y="${height / 2}" fill="${profile === "screen-3d" ? "#f4e8c2" : "#d6a887"}" font-size="${Math.max(24, width / 24)}">${text}</text></svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }

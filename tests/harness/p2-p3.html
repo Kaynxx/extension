@@ -1,8 +1,37 @@
 <!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      body {
+        margin: 0;
+        background: #071019;
+      }
+      main {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        width: 100vw;
+      }
+      canvas,
+      #source-display {
+        display: block;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        object-fit: contain;
+        background: #020507;
+      }
+      #video {
+        display: none;
+      }
+    </style>
+  </head>
   <body>
-    <canvas id="source"></canvas><canvas id="output"></canvas
-    ><video id="video" muted playsinline></video>
+    <main>
+      <img id="source-display" alt="Original fixture" /><canvas id="source"></canvas
+      ><canvas id="output"></canvas>
+    </main>
+    <video id="video" muted playsinline></video>
     <script type="module" src="./p2-p3.ts"></script>
   </body>
 </html>

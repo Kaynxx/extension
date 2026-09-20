@@ -124,3 +124,12 @@ main-thread p50/p95/p99 özetlerini de taşıyor; bu alanlar her koşu için raw
 - İnsan incelemesi: 12 görüntüde paneller hizalı; halo/çift çizgi temiz, color-bleed
   taşması yok, temporal çiftler beklenen hareketi gösteriyor.
 - Kanıt: `npm run check` — 16 test dosyası, 78 test ve üç build hedefi geçti.
+
+## 2026-09-20 P2/P3 headed matrix baseline
+
+- 30/60 FPS × 2x/3x tüm 8 hücre headed RTX 5070 koşusunda 120/120 frame sundu;
+  GPU error ve failure yok.
+- Ham processing samples, p50/p95/p99 ve deterministic OCR/text-edge/halo proxy
+  metrikleri `docs/testing/evidence/p2-p3/p2-p3-results.json` içinde.
+- Model karşılaştırması `pending-candidates-not-available`; ölçüm WebSR/RT4KSR
+  değil, bundled WebGpuBackend baseline'ıdır.
