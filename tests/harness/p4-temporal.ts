@@ -10,6 +10,8 @@ const ctx = source.getContext("2d", { alpha: false })!;
 const adapter = await navigator.gpu.requestAdapter({ powerPreference: "high-performance" });
 if (!adapter) throw new Error("WebGPU adapter yok");
 const device = await adapter.requestDevice();
+const gpuErrors: string[] = [];
+device.addEventListener("uncapturederror", (event) => gpuErrors.push(event.error.message));
 const gpu = output.getContext("webgpu") as GPUCanvasContext;
 const format = navigator.gpu.getPreferredCanvasFormat();
 const backend = new Anime4kBackend();
@@ -40,8 +42,8 @@ const frames: Record<string, { hash: string; cpuSubmitMs: number }[]> = {};
     try {
       prepared = await backend.prepare(frame);
       prepared.present();
-      samples.push({ hash: hash(), cpuSubmitMs: prepared.stats.cpuSubmitMs });
       await device.queue.onSubmittedWorkDone();
+      samples.push({ hash: await hashProcessedOutput(), cpuSubmitMs: prepared.stats.cpuSubmitMs });
     } finally {
       frame.close();
     }
@@ -55,6 +57,8 @@ const frames: Record<string, { hash: string; cpuSubmitMs: number }[]> = {};
     scenario: run.scenario,
     frames: samples,
     resetGeneration: true,
+    gpuErrors,
+    outputSize: { width: output.width, height: output.height },
   };
 };
 (window as Window & { __P4_RUN__?: unknown; __P4_STOP__?: () => void }).__P4_STOP__ = () => {
@@ -74,9 +78,17 @@ function draw(s: Scenario, i: number): void {
     ctx.stroke();
   }
 }
-function hash(): string {
-  const d = ctx.getImageData(0, 0, source.width, source.height).data;
+async function hashProcessedOutput(): Promise<string> {
+  const bitmap = await createImageBitmap(output);
+  const measure = document.createElement("canvas");
+  measure.width = 128;
+  measure.height = 72;
+  const measureContext = measure.getContext("2d", { willReadFrequently: true });
+  if (!measureContext) throw new Error("processed output readback context unavailable");
+  measureContext.drawImage(bitmap, 0, 0, measure.width, measure.height);
+  bitmap.close();
+  const pixels = measureContext.getImageData(0, 0, measure.width, measure.height).data;
   let h = 2166136261;
-  for (const v of d) h = Math.imul(h ^ v, 16777619);
+  for (const value of pixels) h = Math.imul(h ^ value, 16777619);
   return (h >>> 0).toString(16);
 }

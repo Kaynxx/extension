@@ -40,10 +40,7 @@ struct Params {
 }
 
 @group(0) @binding(0) var sourceTexture: texture_2d<f32>;
-@group(0) @binding(1) var historyTexture: texture_2d<f32>;
-@group(0) @binding(2) var sourceSampler: sampler;
-struct TemporalParams { blend: f32, gate: f32, historyValid: f32, _padding: f32 }
-@group(0) @binding(3) var<uniform> temporal: TemporalParams;
+@group(0) @binding(1) var sourceSampler: sampler;
 @group(0) @binding(2) var<uniform> params: Params;
 
 fn sampleAt(uv: vec2f) -> vec3f {
@@ -147,7 +144,10 @@ export const ANIME_PRESENT_SHADER = /* wgsl */ `
 ${FULLSCREEN_VERTEX}
 
 @group(0) @binding(0) var sourceTexture: texture_2d<f32>;
-@group(0) @binding(1) var sourceSampler: sampler;
+@group(0) @binding(1) var historyTexture: texture_2d<f32>;
+@group(0) @binding(2) var sourceSampler: sampler;
+struct TemporalParams { blend: f32, gate: f32, historyValid: f32, _padding: f32 }
+@group(0) @binding(3) var<uniform> temporal: TemporalParams;
 
 @fragment
 fn presentMain(input: VertexOutput) -> @location(0) vec4f {

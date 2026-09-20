@@ -202,7 +202,7 @@ export class Anime4kBackend implements UpscalerBackend {
       label: "Anime4K prepared final frame",
       size: [output.width, output.height],
       format: "rgba8unorm",
-      usage: TEXTURE_USAGE_RENDER_ATTACHMENT | TEXTURE_USAGE_BINDING,
+      usage: TEXTURE_USAGE_RENDER_ATTACHMENT | TEXTURE_USAGE_BINDING | TEXTURE_USAGE_COPY_SRC,
     });
     this.historyTexture = device.createTexture({
       label: "Anime4K temporal history",

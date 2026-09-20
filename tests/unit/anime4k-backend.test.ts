@@ -6,6 +6,7 @@ import {
 } from "../../src/core/gpu/anime4k-backend";
 import type { Anime4kBackendError } from "../../src/core/gpu/anime4k-backend";
 import { ANIME_PROFILE_LEVELS, getAnimePassCount } from "../../src/core/profiles/anime-profile";
+import { ANIME_PRESENT_SHADER } from "../../src/core/models/anime4k-shaders";
 
 describe("Anime4K direct x2 contract", () => {
   it("accepts the 1080p to 4K direct x2 route", () => {
@@ -54,6 +55,10 @@ describe("Anime4K performance levels", () => {
     expect(ANIME_PROFILE_LEVELS.low.lineStrength).toBe(0);
     expect(ANIME_PROFILE_LEVELS.high.lineStrength).toBeGreaterThan(0);
     expect(ANIME_PROFILE_LEVELS.high.lineStrength).toBeLessThanOrEqual(0.2);
+  });
+  it("uses temporal bindings only in the presentation shader", () => {
+    expect(ANIME_PRESENT_SHADER).toContain("historyTexture");
+    expect(ANIME_PRESENT_SHADER).toContain("historyValid");
   });
 
   it("reports the pass count executed by prepare for both levels", async () => {

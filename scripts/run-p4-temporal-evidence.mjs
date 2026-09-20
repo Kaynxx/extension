@@ -75,8 +75,10 @@ try {
     },
     rows,
     canonical: false,
+    captureStatus:
+      "headed-output-visible-no-gpu-errors; processed ImageBitmap readback hashes are stable and are not accepted as temporal metrics",
     failure:
-      "Headed WebGPU output remained black in representative captures; no temporal improvement or ghost/cut metric can be accepted.",
+      "Temporal improvement and ghost/cut metrics remain pending because the processed-surface readback is not frame-sensitive; no canonical evidence was written.",
   };
   await mkdir(out, { recursive: true });
   for (const s of screenshots) await writeFile(path.join(out, s.file), s.shot);
