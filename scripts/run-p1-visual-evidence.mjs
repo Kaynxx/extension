@@ -52,7 +52,11 @@ try {
     page.on("pageerror", (error) => consoleErrors.push(error.message));
     try {
       await page.goto(harnessUrl, { waitUntil: "networkidle" });
-      userAgents.add(await page.evaluate(() => navigator.userAgent));
+      const userAgent = await page.evaluate(() => navigator.userAgent);
+      if (/HeadlessChrome/i.test(userAgent)) {
+        throw new Error(`Canonical P1 evidence rejected HeadlessChrome UA: ${userAgent}`);
+      }
+      userAgents.add(userAgent);
       await page.waitForFunction(() => Boolean(window.__P1_VISUAL_RUN__), undefined, {
         timeout: 20_000,
       });
