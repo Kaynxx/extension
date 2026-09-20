@@ -78,6 +78,16 @@ Son güncelleme: 2026-09-20
 2. `npm run check` ve headless extension integration sonucunu kaydet.
 3. Native YouTube ve insan gözlem kanıtı için kullanıcıdan ayrı, görünür olmayan bir test ortamı/manuel inceleme kararı bekle; bu eksikler kapanmadan goal'ü tamamlandı ilan etme.
 
+## 2026-09-20 P1 headed visual harness düzeltmesi
+
+- Görsel harness artık `sourceVideo` akışına bağlı değildir; Original paneli aynı
+  boyutlu immutable SVG snapshot, WebGPU ise owned ImageBitmap/VideoFrame alır.
+- Panel aspect-ratio/overflow geometrisi düzeltildi; kaynak ve enhanced panel
+  siyah/eksik içerik için ayrı luminance kapısından geçmeden kanıt yazılamaz.
+- Headed RTX 5070 koşusunda preflight ve 12/12 capture geçti; görsel incelemede
+  halo, çift çizgi, renk taşması veya temporal shimmer görülmedi. Canonical
+  manifest bu tam, headed ve headless olmayan koşudan üretildi.
+
 ## 2026-09-20 P5 manga static MVP
 
 - `mangaEnabled` ayarı ve popup opt-in anahtarı eklendi; varsayılan kapalı.

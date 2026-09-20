@@ -18,7 +18,11 @@ if (process.env.P1_VISUAL_HEADLESS === "true") {
 }
 const headless = false;
 const requireHardware = true;
-const outputDirectory = path.join(root, "docs/testing/evidence/p1/visual");
+const preflight = process.env.P1_VISUAL_PREFLIGHT === "true";
+const inspectOnly = process.env.P1_VISUAL_INSPECT === "true";
+const outputDirectory = preflight
+  ? path.join(root, "docs/testing/evidence/p1/visual/archive-diagnostic-headed-preflight")
+  : path.join(root, "docs/testing/evidence/p1/visual");
 const harnessUrl = `http://127.0.0.1:${port}/tests/harness/p1-visual.html`;
 const fixtures = ["halo", "double-line", "color-bleed", "temporal-shimmer"];
 const modes = ["anime-low", "anime-high", "safe-fallback"];
@@ -71,13 +75,20 @@ try {
         // production frame path never performs this evidence-only screenshot.
         const screenshot = await page.screenshot({ fullPage: true });
         const outputBox = await page.locator("#output").boundingBox();
+        const sourceBox = await page.locator("#source-display").boundingBox();
         const nonBlackPixelRatio = measureNonBlackPixels(screenshot, outputBox);
-        if (nonBlackPixelRatio < 0.01) {
+        const sourceNonBlackPixelRatio = measureNonBlackPixels(screenshot, sourceBox);
+        if (nonBlackPixelRatio < 0.01 && !inspectOnly) {
           throw new Error(
             `Visual output siyah yakalandı (nonBlackPixelRatio=${nonBlackPixelRatio})`,
           );
         }
-        const outputEvidence = { nonBlackPixelRatio };
+        if (sourceNonBlackPixelRatio < 0.01 && !inspectOnly) {
+          throw new Error(
+            `Original fixture siyah yakalandı (nonBlackPixelRatio=${sourceNonBlackPixelRatio})`,
+          );
+        }
+        const outputEvidence = { nonBlackPixelRatio, sourceNonBlackPixelRatio };
         const screenshotFile = `${mode}-${fixture}.png`;
         screenshots.set(screenshotFile, screenshot);
         captures.push({
@@ -90,6 +101,7 @@ try {
             sha256: createHash("sha256").update(screenshot).digest("hex"),
             bytes: screenshot.byteLength,
             nonBlackPixelRatio: outputEvidence.nonBlackPixelRatio,
+            sourceNonBlackPixelRatio: outputEvidence.sourceNonBlackPixelRatio,
           },
         });
       }
@@ -131,6 +143,9 @@ try {
       nonBlackOutput: captures.every(
         (capture) => (capture.screenshot.nonBlackPixelRatio ?? 0) >= 0.01,
       ),
+      nonBlackSource: captures.every(
+        (capture) => (capture.screenshot.sourceNonBlackPixelRatio ?? 0) >= 0.01,
+      ),
       temporalPairChanges: captures
         .filter((capture) => capture.fixture === "temporal-shimmer")
         .every((capture) => capture.temporalPair?.first !== capture.temporalPair?.second),
@@ -139,16 +154,18 @@ try {
     consoleErrors,
     humanReviewRequired: true,
   };
-  assertCanonicalAcceptanceEvidence({
-    headless,
-    userAgents: [...userAgents],
-    gpuEvidence: gpuSystemInfo,
-    rawTimingSamples: captures.map((capture) => [capture.stats.cpuSubmitMs]),
-    complete:
-      captures.length === modes.length * fixtures.length &&
-      consoleErrors.length === 0 &&
-      Object.values(report.objectiveChecks).every(Boolean),
-  });
+  if (!preflight) {
+    assertCanonicalAcceptanceEvidence({
+      headless,
+      userAgents: [...userAgents],
+      gpuEvidence: gpuSystemInfo,
+      rawTimingSamples: captures.map((capture) => [capture.stats.cpuSubmitMs]),
+      complete:
+        captures.length === modes.length * fixtures.length &&
+        consoleErrors.length === 0 &&
+        Object.values(report.objectiveChecks).every(Boolean),
+    });
+  }
   await mkdir(outputDirectory, { recursive: true });
   for (const capture of captures) {
     await writeFile(

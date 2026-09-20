@@ -52,6 +52,7 @@ declare global {
 }
 
 const sourceCanvas = required<HTMLCanvasElement>("source-canvas");
+const sourceDisplay = required<HTMLImageElement>("source-display");
 const sourceVideo = required<HTMLVideoElement>("source-video");
 const output = required<HTMLCanvasElement>("output");
 const status = required<HTMLElement>("status");
@@ -102,7 +103,8 @@ async function runCapture(mode: VisualMode, fixture: VisualFixture): Promise<Cap
     const context = sourceCanvas.getContext("2d", { alpha: false });
     if (!context) throw new Error("2D fixture context oluşturulamadı");
     drawFixture(context, fixture, FRAME_INDEX + 1, SEED);
-    secondHash = hashCanvas();
+    secondHash = snapshotHash(fixture, FRAME_INDEX + 1);
+    await drawDisplayFixture(fixture, FRAME_INDEX + 1);
     await nextVideoFrame();
   }
   const sourceFrame = await createSourceFrame(mode);
@@ -172,6 +174,7 @@ async function startSource(): Promise<void> {
   const sourceContext = sourceCanvas.getContext("2d", { alpha: false });
   if (!sourceContext) throw new Error("2D fixture context oluşturulamadı");
   drawFixture(sourceContext, "halo", FRAME_INDEX, SEED);
+  await drawDisplayFixture("halo", FRAME_INDEX);
   // Keep the video element as a playback-state sentinel; the deterministic
   // fixture itself is consumed directly by WebGPU.
   sourcePlaybackStarted = true;
@@ -195,11 +198,17 @@ async function createSourceFrame(mode: VisualMode): Promise<RenderSource> {
   // Use owned snapshots for deterministic fixtures. A canvas captureStream
   // creates a Chromium external-image lifetime that can invalidate headed
   // Vulkan WebGPU devices; production video ownership is not changed here.
-  if (mode !== "safe-fallback") return createImageBitmap(sourceCanvas);
+  if (mode !== "safe-fallback") {
+    const bitmap = await createImageBitmap(sourceDisplay);
+    assertFrameDimensions(bitmap.width, bitmap.height);
+    return bitmap;
+  }
   if (typeof VideoFrame !== "function") {
     throw new Error("VideoFrame API görsel harness'te kullanılamıyor");
   }
-  return new VideoFrame(sourceCanvas, { timestamp: Math.round(performance.now() * 1000) });
+  const frame = new VideoFrame(sourceDisplay, { timestamp: Math.round(performance.now() * 1000) });
+  assertFrameDimensions(frame.codedWidth, frame.codedHeight);
+  return frame;
 }
 
 function closeSourceFrame(source: RenderSource): void {
@@ -228,8 +237,47 @@ async function drawAndWait(fixture: VisualFixture, frameIndex: number): Promise<
   const context = sourceCanvas.getContext("2d", { alpha: false });
   if (!context) throw new Error("2D fixture context oluşturulamadı");
   drawFixture(context, fixture, frameIndex, SEED);
+  await drawDisplayFixture(fixture, frameIndex);
   await nextVideoFrame();
-  return hashCanvas();
+  return snapshotHash(fixture, frameIndex);
+}
+
+async function drawDisplayFixture(fixture: VisualFixture, frameIndex: number): Promise<void> {
+  // The source panel is an immutable image snapshot; sourceVideo remains only
+  // a playback-state sentinel and is never used for evidence rendering.
+  sourceDisplay.src = fixtureSnapshotUrl(fixture, frameIndex);
+  await sourceDisplay.decode().catch(() => undefined);
+}
+
+function fixtureSnapshotUrl(fixture: VisualFixture, frameIndex: number): string {
+  const phase = ((frameIndex + (SEED & 31)) % 32) / 32;
+  let body = `<rect width="1920" height="1080" fill="#ece7db"/>`;
+  if (fixture === "halo")
+    body += `<path d="M430 480 A300 300 0 1 1 430 479 L430 480" fill="#172532" stroke="#080b10" stroke-width="14"/>`;
+  else if (fixture === "double-line")
+    body += `<g stroke="#101820">${Array.from({ length: 30 }, (_, i) => `<line x1="${480 + i * 42}" y1="90" x2="${1080 + i * 42}" y2="690" stroke-width="${i % 2 ? 10 : 3}"/>`).join("")}</g>`;
+  else if (fixture === "color-bleed")
+    body += `<rect width="960" height="1080" fill="#ea284c"/><rect x="960" width="960" height="1080" fill="#1d66e5"/><circle cx="960" cy="540" r="220" fill="#d7a07f" stroke="#241a20" stroke-width="12"/>`;
+  else
+    body = `<rect width="1920" height="1080" fill="#20252f"/><g stroke="#f4e8c2" stroke-width="3">${Array.from({ length: 90 }, (_, i) => `<line x1="${-80 + i * 24 + phase * 12}" y1="0" x2="${340 + i * 24 + phase * 12}" y2="1080"/>`).join("")}</g>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">${body}</svg>`)}`;
+}
+
+function snapshotHash(fixture: VisualFixture, frameIndex: number): string {
+  let hash = 2166136261;
+  for (const char of `${fixture}:${frameIndex}:${SEED}`) {
+    hash ^= char.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(16).padStart(8, "0");
+}
+
+function assertFrameDimensions(width: number, height: number): void {
+  if (width !== sourceCanvas.width || height !== sourceCanvas.height) {
+    throw new Error(
+      `Fixture snapshot boyutu geçersiz: ${width}x${height}; beklenen ${sourceCanvas.width}x${sourceCanvas.height}`,
+    );
+  }
 }
 
 function drawFixture(
@@ -292,18 +340,6 @@ function drawFixture(
     context.stroke();
   }
   context.restore();
-}
-
-function hashCanvas(): string {
-  const context = sourceCanvas.getContext("2d");
-  if (!context) throw new Error("2D fixture context oluşturulamadı");
-  const data = context.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height).data;
-  let hash = 2166136261;
-  for (let index = 0; index < data.length; index += 1) {
-    hash ^= data[index] ?? 0;
-    hash = Math.imul(hash, 16777619);
-  }
-  return (hash >>> 0).toString(16).padStart(8, "0");
 }
 
 function readPlaybackState(): PlaybackState {

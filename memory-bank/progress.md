@@ -113,3 +113,14 @@ main-thread p50/p95/p99 özetlerini de taşıyor; bu alanlar her koşu için raw
   kaynak, resize ve explicit scene-cut resetleri in-flight kareleri geçersiz
   kılar. Temporal model/history henüz uygulanmadı.
 - Kanıt: `npm run typecheck`, `npm run lint`, P4 unit tests — 8 test geçti (full unit suite 73).
+
+## 2026-09-20 P1 headed visual evidence recovery
+
+- Harness kaynak paneli immutable snapshot'a taşındı; captureStream ve üretim
+  video mutasyonu kullanılmadı. Snapshot boyutu, kaynak/enhanced non-black ve
+  queue/present sırası doğrulanıyor.
+- Normal headed Chromium + fiziksel RTX 5070/Vulkan/WebGPU ile halo preflight ve
+  12/12 görsel capture geçti; UA headless değil, console error/device loss yok.
+- İnsan incelemesi: 12 görüntüde paneller hizalı; halo/çift çizgi temiz, color-bleed
+  taşması yok, temporal çiftler beklenen hareketi gösteriyor.
+- Kanıt: `npm run check` — 16 test dosyası, 78 test ve üç build hedefi geçti.

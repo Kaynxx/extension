@@ -77,6 +77,17 @@ Bu seçimler P0 iskelesi kurulurken doğrulanacak, henüz bağımlılık kurulma
 - Son statik doğrulama: `npm run check` (76 test), `npm audit --omit=dev` (0 açık), archive listing/checksum/forbidden-entry gate geçti.
 - Native YouTube ve insan görsel kabulü bu statik kapıların kapsamı değildir.
 
+## 2026-09-20 headed visual harness final
+
+- Visual harness Original paneli immutable SVG snapshot ile beslenir; WebGPU
+  fixture kaynağı owned `ImageBitmap`/`VideoFrame`'dır. `sourceVideo` yalnız
+  playback sentinel olarak kalır; `captureStream` kullanılmaz.
+- Stage paneli sabit 16:9 geometry ile sınırlandırılır. Runner kaynak ve output
+  panelinin non-black oranını ayrı kontrol eder; herhangi biri siyahsa manifest
+  yazılmaz.
+- Headed RTX 5070/Vulkan/WebGPU üzerinde preflight ve 12 capture geçti;
+  `npm run check` 16 test dosyası/78 test ve üç build ile başarılıdır.
+
 ## Platform Kısıtları
 
 - WebGPU secure context gerektirir.

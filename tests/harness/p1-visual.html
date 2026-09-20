@@ -30,6 +30,8 @@
       .panel {
         position: relative;
         min-width: 0;
+        aspect-ratio: 16 / 9;
+        overflow: hidden;
         background: #020507;
         border: 1px solid #294553;
       }
@@ -42,10 +44,11 @@
         font-size: 14px;
       }
       video,
+      #source-display,
       #output {
         display: block;
         width: 100%;
-        aspect-ratio: 16 / 9;
+        height: 100%;
         object-fit: contain;
       }
       #source-canvas {
@@ -55,6 +58,9 @@
         left: -10000px;
         top: -10000px;
         opacity: 0;
+      }
+      #source-video {
+        display: none;
       }
       pre {
         min-height: 7em;
@@ -90,6 +96,7 @@
       <section class="stage">
         <div class="panel">
           <h2>Orijinal</h2>
+          <img id="source-display" width="1920" height="1080" alt="Orijinal fixture" />
           <video id="source-video" muted playsinline></video>
         </div>
         <div class="panel">
